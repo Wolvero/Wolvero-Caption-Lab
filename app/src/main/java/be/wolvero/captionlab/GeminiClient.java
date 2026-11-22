@@ -392,10 +392,12 @@ final class GeminiClient {
             "contrast, an unexpectedly dry punchline or a vivid specific image. " +
             "Choose whichever works for THIS clip. Never promise reach or invent " +
             "cliffhangers, hype, dramatic stakes or fake dialogue. " +
-            "Do NOT use generic AI/TikTok scaffolds like 'POV:' by default, " +
+            "Avoid defaulting to generic AI/TikTok scaffolds like 'POV:', " +
             "'When X meets Y', 'but make it', 'This is cinema', 'Plot twist', " +
             "'You won't believe', 'Nothing says X like Y', 'just another day', " +
             "'Bonnie and Clyde, [place] edition', 'epic journey'. " +
+            "These are NOT mechanically forbidden expressions: use a familiar phrase " +
+            "only when the actual scene earns it and it feels fresh in context. " +
             "No hashtags. Usually no emoji; at most one apt emoji if natural. " +
             "Allow 2 to 17 words, with varied natural lengths and structures. " +
             "Do not repeatedly include the game title. " +
