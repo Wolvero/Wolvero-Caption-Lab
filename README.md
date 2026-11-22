@@ -1,6 +1,6 @@
 # Wolvero Caption Lab · Android
 
-**Wolvero Caption Lab 1.3** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Wolvero Caption Lab 1.4** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -20,7 +20,18 @@ De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan 
 
 De gebruiker heeft zelf reeds de sleutels gemaakt en hoeft die niet opnieuw aan te vragen.
 
-## Wat nieuw is in 1.3
+## Wat nieuw is in 1.4
+
+- **Een interface die met je mee verandert:** op het startscherm zie je het uploadverhaal; zodra je een video selecteert verdwijnen de intro en informatiechips. Je ziet de gekozen clip, het optionele gameveld en de knop om captions te maken. Zodra er resultaten zijn, verdwijnen de uploadblokken en komen de captions meteen bovenaan.
+- **Geen permanent sleutel-tandwiel** wanneer beide sleutels zijn opgeslagen. Je kunt sleutels indien nodig nog wijzigen door het **W/-logo lang ingedrukt** te houden. Bij ontbrekende sleutels of bepaalde foutgevallen kan de configuratie uiteraard terug verschijnen.
+- **Videoanalyse en bronnen zijn uitklapbaar** onder de vijf captions. De eindgebruiker krijgt geen onnodige hoofdstukfout als headline bij trailers of montages.
+- **Montages en emotionele samenhang:** de videoanalist benoemt het totale thema en de vorm van het filmpje (voorzichtig, als inschatting), en de captionschrijver zoekt de betekenis van het volledige fragment in plaats van vijf losse zinnen over vijf shots.
+- De daadwerkelijk door de maker gepubliceerde caption **"In a world of chaos, there's still love ♡"** is als specifieke stijlreferentie toegevoegd voor emotionele GTA VI-montages, zonder dit tot standaardformule voor andere clips te verheffen.
+- De scrollbar werd aangepast zodat resultatentitels beter wegblijven uit de systeemstatusbalk.
+
+De Android-build controleert of de code compileert. Of de captionkeuze goed aansluit op een individuele video, vereist nog een praktijktest.
+
+## Eerdere verbeteringen in 1.3
 
 - **Herkenning per spelversie:** Gemini moet specifieke aanwijzingen zoeken (personages, locaties, UI). De app controleert versiespecifieke inconsistenties, bijvoorbeeld GTA V versus de GTA VI-locatie Leonida of het duo Jason/Lucia.
 - **Extra online controle van de game**, niet enkel hoofdstukken: Tavily-zoekresultaten worden voorzichtig getoetst aan wat de AI echt in de video zag. Een correctie gebeurt enkel bij voldoende expliciete ondersteuning.
