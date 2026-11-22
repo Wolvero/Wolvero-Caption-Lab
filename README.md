@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.5** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.6** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,17 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.5
+## Wat nieuw is in 1.6
+
+- **Foutcorrectie voor onvolledige AI-antwoorden.** De vorige versie verwierp het volledige resultaat als een van de AI-antwoorden minder dan exact vijf captions bevatte. Dat kon ook gebeuren tijdens de extra controle van een optionele makerstoelichting.
+- De app kan nu **1–5 unieke, bruikbare captions** tijdelijk vasthouden en vanuit de bestaande geanalyseerde videofeiten een ontbrekende set laten aanvullen, zonder de videofile opnieuw naar Gemini te uploaden.
+- De semantische contextcontrole probeert een onvoldoende of verkeerd gevormd AI-antwoord via een extra beknopte aanvraag te herstellen. De controle blijft gericht op het behoud van de werkelijk bedoelde afloop, niet op een bepaald onderwerp.
+- Als Google ook na herstelpogingen minder dan vijf captions levert, toont de app **het werkelijke aantal** in plaats van een harde crash of verzonnen opvulteksten.
+- Extra API-verzoeken voor herstel zijn alleen nodig als een model minder dan vijf of anderszins onbruikbare captions terugstuurt. Gratis gebruik blijft afhankelijk van de quota van de eigen Gemini API-sleutel.
+
+De APK compileert via GitHub Actions; het daadwerkelijke Gemini-antwoord is hiermee nog niet live gevalideerd.
+
+## Eerdere verbeteringen in 1.5
 
 - Naam, app-label, launcher-icon, logo en zichtbare branding zijn **Caption Lab**. De bestaande technische Android package-id blijft behouden, zodat toekomstige updates dezelfde app-identiteit gebruiken.
 - Videoanalyse legt **de zichtbare afloop** expliciet vast, met eventuele onzekerheid in het videobeeld.
