@@ -649,37 +649,9 @@ public final class MainActivity extends Activity {
     }
     private void showResult(GeminiClient.Result data) {
         results.removeAllViews();
-        addText(results, "JOUW RESULTATEN", 12, PURPLE, true, 22);
+        resultVideoLabel.setText(data.game + "  •  " + selectedName);
+        addText(results, "05 CAPTIONS OM UIT TE KIEZEN", 12, PURPLE, true, 15);
         addSpacer(results, 13);
-        LinearLayout context = card();
-        results.addView(context, lp(-1, -2));
-        addText(context, "GAME", 11, MUTED, true, 0);
-        addText(context, data.game, 23, WHITE, true, 7);
-        if ("provided".equals(data.confidence)) {
-            addText(context, "Door jou opgegeven", 12, GOOD, false, 6);
-        }
-        if (!data.scene.isEmpty()) {
-            addText(context, "WAT ER GEBEURT", 11, PURPLE, true, 20);
-            addText(context, data.scene, 14, WHITE, false, 7);
-        }
-        addText(context, "ONLINE CONTROLE", 11, PURPLE, true, 20);
-        String chapter = data.chapter.isEmpty() ? "Hoofdstuk onbekend" : data.chapter;
-        addText(context, chapter, 15, WHITE, true, 7);
-        addText(context, data.chapterStatus, 12, data.sources.isEmpty() ? MUTED : GOOD, false, 7);
-        if (!data.verificationNote.isEmpty()) addText(context, data.verificationNote, 12, MUTED, false, 7);
-        for (GeminiClient.Source source : data.sources) {
-            TextView link = text("↗  " + source.title, 12, PURPLE, false);
-            link.setPaintFlags(link.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
-            LinearLayout.LayoutParams linkp = lp(-1, -2);
-            linkp.topMargin = dp(10);
-            context.addView(link, linkp);
-            link.setOnClickListener(v -> {
-                try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(source.url))); }
-                catch (Exception ignored) { Toast.makeText(this, "Bron kan niet geopend worden.", Toast.LENGTH_SHORT).show(); }
-            });
-        }
-        addText(results, "05   CAPTIONS OM UIT TE KIEZEN", 12, PURPLE, true, 25);
-        addSpacer(results, 14);
         int i = 0;
         for (GeminiClient.Caption caption : data.captions) {
             final int index = ++i;
@@ -690,7 +662,8 @@ public final class MainActivity extends Activity {
             itemp.bottomMargin = dp(12);
             results.addView(item, itemp);
             LinearLayout top = horizontal();
-            top.addView(text(String.format(Locale.getDefault(), "%02d  %s", index, caption.style.toUpperCase(Locale.ROOT)),
+            top.addView(text(String.format(Locale.getDefault(), "%02d  %s",
+                    index, caption.style.toUpperCase(Locale.ROOT)),
                     11, PURPLE, true), new LinearLayout.LayoutParams(0, -2, 1f));
             item.addView(top, lp(-1, -2));
             addText(item, caption.text, 17, WHITE, true, 13);
@@ -702,7 +675,72 @@ public final class MainActivity extends Activity {
             });
             item.addView(copy, lp(-1, 44));
         }
-        scroll.post(() -> scroll.smoothScrollTo(0, results.getTop()));
+
+        // Keep research transparent, but let the captions be the primary screen.
+        LinearLayout explanation = card();
+        LinearLayout.LayoutParams ep = lp(-1, -2);
+        ep.topMargin = dp(12);
+        results.addView(explanation, ep);
+        addText(explanation, "WAAROM DEZE CAPTIONS?", 11, PURPLE, true, 0);
+        TextView detailsTitle = text("Videoanalyse en bronnen bekijken  ＋", 14, WHITE, true);
+        LinearLayout.LayoutParams dtp = lp(-1, -2);
+        dtp.topMargin = dp(12);
+        explanation.addView(detailsTitle, dtp);
+
+        LinearLayout detailContent = vertical();
+        detailContent.setVisibility(View.GONE);
+        explanation.addView(detailContent, lp(-1, -2));
+        detailsTitle.setOnClickListener(v -> {
+            boolean open = detailContent.getVisibility() == View.VISIBLE;
+            detailContent.setVisibility(open ? View.GONE : View.VISIBLE);
+            detailsTitle.setText(open ? "Videoanalyse en bronnen bekijken  ＋" :
+                    "Videoanalyse en bronnen verbergen  −");
+        });
+        addText(detailContent, "GAME", 11, PURPLE, true, 18);
+        addText(detailContent, data.game, 18, WHITE, true, 7);
+        if ("provided".equals(data.confidence)) {
+            addText(detailContent, "Door jou opgegeven", 12, GOOD, false, 6);
+        } else {
+            addText(detailContent, "Herkenning: " + translateConfidence(data.confidence),
+                    12, MUTED, false, 6);
+        }
+        if (!data.scene.isEmpty()) {
+            addText(detailContent, "WAT ER GEBEURT", 11, PURPLE, true, 18);
+            addText(detailContent, data.scene, 14, WHITE, false, 7);
+        }
+        if (!data.storyArc.isEmpty()) {
+            addText(detailContent, "VERLOOP EN SFEER", 11, PURPLE, true, 18);
+            addText(detailContent, data.storyArc, 14, WHITE, false, 7);
+        }
+        if (!data.audioCues.isEmpty()) {
+            addText(detailContent, "GELUID", 11, PURPLE, true, 18);
+            addText(detailContent, data.audioCues, 14, WHITE, false, 7);
+        }
+        if (!data.sources.isEmpty() || !data.chapter.isEmpty()) {
+            addText(detailContent, "ONLINE BRONNEN", 11, PURPLE, true, 18);
+            if (!data.chapter.isEmpty()) addText(detailContent, data.chapter, 14, WHITE, true, 7);
+            for (GeminiClient.Source source : data.sources) {
+                TextView link = text("↗  " + source.title, 12, PURPLE, false);
+                link.setPaintFlags(link.getPaintFlags() |
+                        android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+                LinearLayout.LayoutParams linkp = lp(-1, -2);
+                linkp.topMargin = dp(9);
+                detailContent.addView(link, linkp);
+                link.setOnClickListener(v -> {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(source.url)));
+                    } catch (Exception ignored) {
+                        Toast.makeText(this, "Bron kan niet geopend worden.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+
+        showingResults = true;
+        updateUiStage();
+        // The result title stays below the system status bar, even with scroll insets.
+        scroll.post(() -> scroll.smoothScrollTo(0, 0));
     }
     private String translateConfidence(String s) {
         if ("high".equalsIgnoreCase(s)) return "hoog (AI-inschatting)";
