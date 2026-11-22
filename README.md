@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.10** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.11** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,20 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.10
+## Wat nieuw is in 1.11
+
+- **Lucht tussen logo en uploadkaart:** duidelijkere vaste ruimte na de CL-header.
+- **Gametitelveld verwijderd:** de app gebruikt automatisch het afgesproken eerste bestandsnaamdeel vóór de underscore; de rest van de naam blijft volledig buiten de AI-captionanalyse. Het optionele veld voor eigen inhoudelijke context blijft behouden.
+- **Compacte, responsieve video-invoer:** kleiner videovoorbeeld op kleinere schermen, minder lege ruimte, compacte knoppen en kaarten, en de uploadtitel verdwijnt nadat een video is gekozen. Vooral het eerste scherm mét gekozen video is erop gericht volledig op een doorsnee smartphone in portretstand te passen. Bij grote toegankelijkheidstekst of kleine toestellen kan scrollen nog nodig zijn.
+- **Captiongesprek na de analyse:** onder de vijf captions kun je in een Nederlands of Engels tekstveld reageren: bijvoorbeeld 'combineer 1 en 3' of 'neem 2, maar denk meer aan ...'. De nummering verwijst naar de huidige vijf voorstellen. Eén druk op 'Verfijn mijn captions' vraagt vijf nieuwe Engelse suggesties, met de beste bovenaan.
+- **Meerdere vervolgrondes:** de app onthoudt binnen dezelfde videosessie de huidige voorstellen, oorspronkelijke analyse en eerdere redactieverzoeken, zodat je verder kunt bijsturen.
+- **Geen tweede videoupload of nieuwe gamezoekopdracht:** voor captionverfijning is alleen een Gemini-tekstverzoek nodig. Dat gebruikt de eigen gratis API-sleutel en quota; bij een onvolledig antwoord kan een enkele extra herstelpoging volgen.
+- **Vorig resultaat blijft behouden als verfijning mislukt:** pas na succesvolle controle vervangt de app de captions. Zo raak je je eerdere ideeën niet kwijt door een mislukte Gemini-reactie.
+- **Bestaande videoanalyse en game-research ongewijzigd:** de nieuwe creatieve vervolgstap is een aanvulling, geen vervanging van de huidige verwerkingsketen.
+
+De APK-build controleert compileerbaarheid. Het responsieve resultaat op alle schermen en de bruikbaarheid van de interactieve Gemini-verfijning vereisen nog tests op een werkelijk toestel.
+
+## Eerdere verbeteringen in 1.10
 
 - **Gamegerichte research:** de Tavily-zoekvraag vertrekt van de exacte geselecteerde gametitel tussen aanhalingstekens en zoekt naar gamepagina's, reviews en achtergrond. Geen generieke webzoektocht op acties in de clip zoals huwelijksaanzoeken, mesgevechten of koffiescènes.
 - **Bronnenfilter:** zoekresultaten worden eerst gecontroleerd op game-naam en daadwerkelijke videogamecontext; generieke huwelijksaanzoekpagina's of verwarring met een andere game komen niet meer zomaar in de resultaten. De Google Search-fallback wordt ook op bronnen gefilterd.
