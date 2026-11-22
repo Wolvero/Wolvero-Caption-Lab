@@ -65,7 +65,8 @@ final class GeminiClient {
     }
 
     static Result analyze(File video, String mime, String key, String tavilyKey,
-                          String userGame, String userContext, Status status) throws Exception {
+                          String userGame, String filenameGamePrefix,
+                          String userContext, Status status) throws Exception {
         if (video == null || !video.exists() || video.length() <= 0 || video.length() > MAX_FILE_BYTES)
             throw new IOException("Kies een video van maximaal 80 MB.");
         String fileName = null;
@@ -81,7 +82,9 @@ final class GeminiClient {
             status.update("Beeld en geluid analyseren …");
             String gameHint = userGame == null ? "" : limit(userGame.trim(), 90);
             String creatorNote = userContext == null ? "" : limit(userContext.trim(), 450);
-            Response first = generateFromVideo(fileUri, mime, key, gameHint);
+            String filenameTitleHint = filenameGamePrefix == null ? "" :
+                    limit(filenameGamePrefix.trim(), 100);
+            Response first = generateFromVideo(fileUri, mime, key, gameHint, filenameTitleHint);
             Result result = parseAnalysis(first.text);
             if (!gameHint.isEmpty()) {
                 result.game = gameHint;
@@ -258,7 +261,7 @@ final class GeminiClient {
     }
 
     private static Response generateFromVideo(String uri, String mime, String key,
-                                               String gameHint) throws Exception {
+                                               String gameHint, String filenameGamePrefix) throws Exception {
         String prompt =
             "You are a meticulous gameplay VIDEO and AUDIO analyst, not a TikTok caption writer. " +
             "Study the actual video carefully. Examine the entire clip for specific beats, what changes " +
@@ -268,8 +271,15 @@ final class GeminiClient {
             "is the same installment. Base the game title on version-specific evidence: characters, " +
             "place names, logo, UI, story. If Leonida, Jason AND Lucia, or other GTA VI-specific clues " +
             "appear, do NOT label the clip GTA V. A game can be a trailer rather than playable gameplay. " +
-            "If the creator provided a game title, use that game name; otherwise identify it " +
-            "conservatively. If you are unsure which installment, mark game_confidence low. " +
+            "If the creator typed an explicit game title, give it priority. " +
+            "Otherwise the app MAY provide a filename-derived GAME TITLE PREFIX: a compact " +
+            "game title without spaces, possibly CamelCase or an acronym with Roman numerals. " +
+            "Interpret it as a clue for identifying the game and canonical title, " +
+            "not proof that overrides incompatible video evidence. " +
+            "Do NOT infer anything about the story, mood, subject, specific events, " +
+            "music, dialogue, or desired caption from this game-title prefix. " +
+            "The filename description/organizational suffix is deliberately NOT supplied. " +
+            "If unsure which game or installment, mark game_confidence low. " +
             "Analyse ONLY the video and audio; no creator interpretation is provided in this step. " +
             "Describe the video, not speculation about what might happen offscreen. " +
             "DO NOT invent arrests, stolen cars, shootings, kisses or relationships not grounded in " +
@@ -295,8 +305,9 @@ final class GeminiClient {
             "search_query (short online lookup query prioritizing distinctive names and clues " +
             "over a guessed title; empty if no discriminating clues). " +
             "Do not write any captions here. " +
-            "Game title provided by creator, if any: " +
-            new JSONObject().put("game_title", gameHint).toString();
+            "Game-title hints, neither is video-scene evidence: " +
+            new JSONObject().put("creator_explicit_game_title", gameHint)
+                .put("filename_game_prefix_only", filenameGamePrefix).toString();
         JSONObject request = new JSONObject();
         JSONObject parts = new JSONObject().put("parts", new JSONArray()
                 .put(new JSONObject().put("file_data", new JSONObject()

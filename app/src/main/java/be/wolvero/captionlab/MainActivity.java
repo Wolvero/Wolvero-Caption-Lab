@@ -620,6 +620,9 @@ public final class MainActivity extends Activity {
         catch (Exception ignored) { optionalKey = ""; }
         tavilyKey = optionalKey;
         final String gameHint = gameInput == null ? "" : gameInput.getText().toString().trim();
+        // User convention: the first underscore separates the game from purely personal
+        // file-organization text. Never give the suffix to any AI request.
+        final String filenameGameHint = FilenameGameHint.extract(selectedName);
         final String creatorNote = creatorNoteInput == null ? "" : creatorNoteInput.getText().toString().trim();
         working = true;
         setButtonReady();
@@ -628,7 +631,8 @@ public final class MainActivity extends Activity {
         tasks.execute(() -> {
             try {
                 GeminiClient.Result result = GeminiClient.analyze(selectedVideo, selectedMime, apiKey, tavilyKey,
-                        gameHint, creatorNote, status -> runOnUiThread(() -> setProgress(status, true)));
+                        gameHint, filenameGameHint, creatorNote,
+                        status -> runOnUiThread(() -> setProgress(status, true)));
                 runOnUiThread(() -> {
                     setProgress("", false);
                     working = false;

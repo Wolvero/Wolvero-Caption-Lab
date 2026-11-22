@@ -24,6 +24,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Check game-prefix filename parser
+        run: |
+          mkdir -p /tmp/captionlab-filename-tests
+          javac -d /tmp/captionlab-filename-tests \
+            app/src/main/java/be/wolvero/captionlab/FilenameGameHint.java \
+            app/src/test/java/be/wolvero/captionlab/FilenameGameHintSmokeTest.java
+          java -cp /tmp/captionlab-filename-tests be.wolvero.captionlab.FilenameGameHintSmokeTest
       - name: Ensure Android SDK 35
         shell: bash
         run: |
@@ -61,10 +68,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk Caption-Lab.apk
-          if gh release view v1.6 >/dev/null 2>&1; then
-            gh release upload v1.6 Caption-Lab.apk --clobber
+          if gh release view v1.7 >/dev/null 2>&1; then
+            gh release upload v1.7 Caption-Lab.apk --clobber
           else
-            gh release create v1.6 Caption-Lab.apk \
-              --title "Caption Lab 1.6" \
+            gh release create v1.7 Caption-Lab.apk \
+              --title "Caption Lab 1.7" \
               --notes "Wolvero Caption Lab for Android. Download the APK, install it, and enter your own free Gemini and Tavily keys in the app. Never share your keys."
           fi

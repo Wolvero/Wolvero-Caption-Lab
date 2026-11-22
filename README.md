@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.6** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.7** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,15 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.6
+## Wat nieuw is in 1.7
+
+- **Vaste bestandsnaamconventie:** `GametitelZonderSpaties_omschrijving.mp4`. Alleen het deel vóór de **eerste underscore** is een extra, automatisch gevonden hint voor de gametitel.
+- **De tekst na de eerste underscore wordt volledig genegeerd voor alle AI-aanvragen.** Het is uitsluitend een organisatorische bestandsaanduiding en zegt niets over wat de video moet betekenen of welke caption de app hoort te maken. Bijvoorbeeld: `ResonanceAPlagueTaleLegacy_mercy.mp4` levert enkel `ResonanceAPlagueTaleLegacy` als hint aan de gamedetector; het woord na de underscore wordt nergens meegestuurd.
+- De gametitelhint is geen bewijs; de video- en audioanalyse blijft leidend. Een expliciet ingevulde gametitel krijgt voorrang.
+- Er is een Java-smoketest toegevoegd voor het parsergedrag, die automatisch voor elke Android-build draait.
+- **Geen extra invoer nodig:** de gebruiker kiest alleen een video. Optionele makerstoelichting blijft volledig los van de bestandsnaam.
+
+## Eerdere verbeteringen in 1.6
 
 - **Foutcorrectie voor onvolledige AI-antwoorden.** De vorige versie verwierp het volledige resultaat als een van de AI-antwoorden minder dan exact vijf captions bevatte. Dat kon ook gebeuren tijdens de extra controle van een optionele makerstoelichting.
 - De app kan nu **1–5 unieke, bruikbare captions** tijdelijk vasthouden en vanuit de bestaande geanalyseerde videofeiten een ontbrekende set laten aanvullen, zonder de videofile opnieuw naar Gemini te uploaden.
