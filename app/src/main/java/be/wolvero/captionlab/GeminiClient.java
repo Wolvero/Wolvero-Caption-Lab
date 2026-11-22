@@ -46,6 +46,8 @@ final class GeminiClient {
         String visualBeats = "";
         String audioCues = "";
         String storyArc = "";
+        String centralTheme = "";
+        String videoForm = "";
         String gameEvidence = "";
         String webQuery = "";
         String chapter = "";
@@ -224,6 +226,9 @@ final class GeminiClient {
             "visual_beats (array of 2 to 5 distinct observed moments in chronological order), " +
             "audio_cues (one sentence about audible speech/music/atmosphere; don't guess song identities), " +
             "story_arc (one sentence about visible emotional or comedic progression; don't invent), " +
+            "video_form ('single_moment'|'montage'|'trailer'|'unclear'), " +
+            "central_theme (one short line on the video-wide dominant emotional or comedic meaning; " +
+            "use 'unclear' if the material genuinely has none, avoid guessing audience intent), " +
             "mood (English), chapter_guess (empty string if unclear), " +
             "search_query (short online lookup query prioritizing distinctive names and clues " +
             "over a guessed title; empty if no discriminating clues). " +
@@ -252,6 +257,8 @@ final class GeminiClient {
                 .put("visual_beats", result.visualBeats)
                 .put("audio_cues", result.audioCues)
                 .put("story_arc", result.storyArc)
+                .put("video_form", result.videoForm)
+                .put("central_theme", result.centralTheme)
                 .put("mood", result.mood)
                 .put("chapter", "Volgens online bronnen".equals(result.chapterStatus) ? result.chapter : "")
                 .put("creator_note", creatorNote)
@@ -263,7 +270,12 @@ final class GeminiClient {
             "and typically blank; never ask for context and never depend on it. " +
             "Write EXACTLY FIVE natural English one-line captions that could actually be posted. " +
             "Goal: at least one genuinely clever, specific choice that a picky gamer would keep. " +
-            "Understand the emotional/comedic beat of the entire clip FIRST. " +
+            "FIRST decide what the WHOLE clip expresses, if anything, before choosing any " +
+            "joke or specific scene. Use the video's identified form and central_theme as " +
+            "hypotheses checked against scene, visual beats and audio, not as unquestionable truths. " +
+            "For a montage with one clear throughline, strong captions usually articulate the " +
+            "OVERALL CONTRAST or FEELING, not five unrelated scene summaries. " +
+            "For a single funny moment, identify the precise punchline instead. " +
             "For a cinematic, romantic, melancholy or poignant montage, respect its actual audio " +
             "and progression. The soundtrack may already carry the emotion, so keep language subtle. " +
             "Never force the same romance/crime joke five ways; never insert cops, car theft, " +
@@ -271,10 +283,12 @@ final class GeminiClient {
             "For absurd or funny clips, use dry understatement, unusual reactions, " +
             "very short deadpan remarks, or occasional gleeful exaggeration. " +
             "For sadness, use restraint rather than corny inspiration or jokes. " +
-            "Creative diversity is essential: find FIVE DISTINCT angles, not five phrasings of " +
-            "the same premise. Work from different moments, contrasts, relationships, punchlines " +
-            "or emotional textures ACTUALLY present in the clip. " +
-            "You may have up to two captions using the same underlying premise, NEVER three. " +
+            "Creative range matters, but do NOT confuse five completely disconnected scene " +
+            "summaries with five useful caption choices. Every line should suit the complete video. " +
+            "When a montage has a strong emotional theme, give several different elegant ways " +
+            "to convey that common theme, plus contrasting alternatives only when they also " +
+            "fit the whole clip. For comedy/action, offer significantly different comic angles. " +
+            "Avoid five near-duplicates in either case. " +
             "Before output, privately draft at least ten candidates, remove repetitive or " +
             "generic ones, and choose the five most differentiated. " +
             "At least two should be under seven words. Prefer 3 to 13 words, never over 18. " +
@@ -284,7 +298,11 @@ final class GeminiClient {
             "Do not invent specific actions or imply that something is about to happen if " +
             "it is not established in the clip. The best punchline is often a completely straight " +
             "description with one unexpected twist. Avoid clickbait and overexplaining. " +
-            "STYLE REFERENCES FOR VIBE ONLY (don't recycle automatically): " +
+            "STYLE REFERENCES FOR VIBE ONLY (don't recycle automatically or infer that " +
+            "all videos should be romantic; genre and tone must follow the clip): " +
+            "'In a world of chaos, there's still love ♡' (a REAL caption the creator " +
+            "selected and published for a romantic GTA VI video montage: the emotional " +
+            "theme mattered more than isolated criminal actions), " +
             "'A love story with a wanted level.' (tiny contrast, romantic montage), " +
             "'Perfect extraction. Would recommend.' (dry disaster humour), " +
             "'No signal. Only loss.' (quiet grief), " +
@@ -511,6 +529,8 @@ final class GeminiClient {
         result.mood = json.optString("mood", "");
         result.audioCues = json.optString("audio_cues", "");
         result.storyArc = json.optString("story_arc", "");
+        result.centralTheme = json.optString("central_theme", "");
+        result.videoForm = json.optString("video_form", "unclear");
         result.gameEvidence = json.optString("game_evidence", "");
         JSONArray beats = json.optJSONArray("visual_beats");
         if (beats != null) {
