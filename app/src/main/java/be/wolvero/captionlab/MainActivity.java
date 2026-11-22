@@ -719,6 +719,14 @@ public final class MainActivity extends Activity {
             addText(detailContent, "Herkenning: " + translateConfidence(data.confidence),
                     12, MUTED, false, 6);
         }
+        if (!data.gameBackground.isEmpty()) {
+            addText(detailContent, "ACHTERGROND OVER DE GAME", 11, PURPLE, true, 18);
+            addText(detailContent, data.gameBackground, 13, WHITE, false, 7);
+        }
+        if (!data.relatedSceneLore.isEmpty()) {
+            addText(detailContent, "BRONGESTAAFDE SCÈNECONTEXT", 11, PURPLE, true, 18);
+            addText(detailContent, data.relatedSceneLore, 13, WHITE, false, 7);
+        }
         if (!data.scene.isEmpty()) {
             addText(detailContent, "WAT ER GEBEURT", 11, PURPLE, true, 18);
             addText(detailContent, data.scene, 14, WHITE, false, 7);
@@ -732,7 +740,7 @@ public final class MainActivity extends Activity {
             addText(detailContent, data.audioCues, 14, WHITE, false, 7);
         }
         if (!data.sources.isEmpty() || !data.chapter.isEmpty()) {
-            addText(detailContent, "ONLINE BRONNEN", 11, PURPLE, true, 18);
+            addText(detailContent, "BRONNEN OVER DE GAME", 11, PURPLE, true, 18);
             if (!data.chapter.isEmpty()) addText(detailContent, data.chapter, 14, WHITE, true, 7);
             for (GeminiClient.Source source : data.sources) {
                 TextView link = text("↗  " + source.title, 12, PURPLE, false);
