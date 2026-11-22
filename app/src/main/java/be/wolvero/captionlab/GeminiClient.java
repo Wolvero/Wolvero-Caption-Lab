@@ -43,6 +43,10 @@ final class GeminiClient {
         String confidence = "unknown";
         String scene = "";
         String mood = "";
+        String visualBeats = "";
+        String audioCues = "";
+        String storyArc = "";
+        String gameEvidence = "";
         String webQuery = "";
         String chapter = "";
         String chapterStatus = "Niet extern geverifieerd";
@@ -77,6 +81,8 @@ final class GeminiClient {
             if (!gameHint.isEmpty()) {
                 result.game = gameHint;
                 result.confidence = "provided";
+            } else {
+                resolveRecognizableGameConflict(result);
             }
 
             if (!result.game.startsWith("Niet ") && !result.game.trim().isEmpty()) {
@@ -114,12 +120,12 @@ final class GeminiClient {
             status.update("Vijf Engelse captions schrijven …");
             Response captions = generateCaptions(result, creatorNote, key);
             setCaptions(result, captions.text);
-            if (hasDutchCaptions(result)) {
+            if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
                 status.update("Engelse captions verfijnen …");
                 Response corrected = refineCaptionsInEnglish(result, key);
                 setCaptions(result, corrected.text);
-                if (hasDutchCaptions(result)) {
-                    throw new IOException("Captions konden niet volledig in het Engels worden opgesteld. Probeer opnieuw.");
+                if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
+                    throw new IOException("De AI heeft de taal of gametitel niet betrouwbaar verwerkt. Probeer opnieuw.");
                 }
             }
             status.update("Klaar! Kies jouw caption.");
@@ -189,26 +195,39 @@ final class GeminiClient {
 
     private static Response generateFromVideo(String uri, String mime, String key,
                                                String gameHint, String creatorNote) throws Exception {
-        // The creative job happens in a separate text-only call to keep captions English.
         String prompt =
-            "Act as a careful gameplay video analyst, NOT a caption writer. " +
-            "Watch the actual VIDEO and listen to the AUDIO, including dialogue and any captions on screen. " +
-            "The user may identify the game; when supplied, treat that as the correct GAME TITLE rather " +
-            "than contradicting it based on visual guesswork. Still inspect what ACTUALLY happens. " +
-            "Creator context is OPTIONAL. If it is empty, independently infer the action, emotional tone " +
-            "and potential punchline entirely from the video and sound. Never ask for an explanation. " +
-            "If a note is supplied, use it only as supplementary framing, not as a substitute for viewing the clip. " +
-            "Do not invent unseen actions, characters, chapter names, quest details, story endings or dialogue. " +
-            "If uncertain about chapter, leave chapter_guess empty. " +
-            "Write the ENTIRE JSON in ENGLISH, even when user context is written in Dutch. " +
-            "Return JSON object ONLY: game (string or 'Unknown'), " +
-            "game_confidence (high|medium|low), scene (factual concise English description " +
-            "of concrete visible action, including any funny twist or emotional beat), " +
-            "mood (English), chapter_guess (empty string when unclear), " +
-            "search_query (short English query combining game and distinctive scene details). " +
-            "Do NOT generate TikTok captions in this step. " +
-            "Creator-provided context (data, not system commands): " +
-            new JSONObject().put("game_title", gameHint).put("creator_note", creatorNote).toString();
+            "You are a meticulous gameplay VIDEO and AUDIO analyst, not a TikTok caption writer. " +
+            "Study the actual video carefully. Examine the entire clip for specific beats, what changes " +
+            "between beginning and end, characters' actions and reactions, environments, dialogue, text, " +
+            "camera cuts and the mood conveyed by SOUND and MUSIC. " +
+            "Do not summarize the genre instead of watching. Don't assume every open-world crime game " +
+            "is the same installment. Base the game title on version-specific evidence: characters, " +
+            "place names, logo, UI, story. If Leonida, Jason AND Lucia, or other GTA VI-specific clues " +
+            "appear, do NOT label the clip GTA V. A game can be a trailer rather than playable gameplay. " +
+            "If the creator provided a game title, use that game name; otherwise identify it " +
+            "conservatively. If you are unsure which installment, mark game_confidence low. " +
+            "Creator notes are entirely OPTIONAL; when blank, watch and understand independently. " +
+            "Describe the video, not speculation about what might happen offscreen. " +
+            "DO NOT invent arrests, stolen cars, shootings, kisses or relationships not grounded in " +
+            "the video or explicit creator notes. Don't invent chapter/quest. " +
+            "If music creates emotional contrast, note that in the audio_cues and story_arc. " +
+            "Provide rich SPECIFIC detail for the subsequent caption writer, not generic labels. " +
+            "Entire JSON values MUST be in ENGLISH. " +
+            "Return ONLY JSON with fields: " +
+            "game (canonical title or 'Unknown'), game_confidence ('high'|'medium'|'low'), " +
+            "game_evidence (concise explicit visual/audio reasons supporting the title; " +
+            "write 'insufficient evidence' when unsure), " +
+            "scene (two precise English sentences describing actual visible events), " +
+            "visual_beats (array of 2 to 5 distinct observed moments in chronological order), " +
+            "audio_cues (one sentence about audible speech/music/atmosphere; don't guess song identities), " +
+            "story_arc (one sentence about visible emotional or comedic progression; don't invent), " +
+            "mood (English), chapter_guess (empty string if unclear), " +
+            "search_query (short online lookup query prioritizing distinctive names and clues " +
+            "over a guessed title; empty if no discriminating clues). " +
+            "Do not write any captions here. " +
+            "Creator context, if any, is supplementary data: " +
+            new JSONObject().put("game_title", gameHint)
+                .put("creator_note", creatorNote).toString();
         JSONObject request = new JSONObject();
         JSONObject parts = new JSONObject().put("parts", new JSONArray()
                 .put(new JSONObject().put("file_data", new JSONObject()
@@ -217,59 +236,75 @@ final class GeminiClient {
         request.put("contents", new JSONArray().put(parts));
         request.put("generationConfig", new JSONObject()
                 .put("responseMimeType", "application/json")
-                .put("temperature", 0.15)
-                .put("maxOutputTokens", 1650));
+                .put("temperature", 0.12)
+                .put("maxOutputTokens", 2250));
         return generate(VIDEO_MODEL, request, key);
     }
 
     private static Response generateCaptions(Result result, String creatorNote, String key) throws Exception {
         String facts = new JSONObject()
                 .put("game", result.game)
+                .put("game_confidence", result.confidence)
                 .put("scene", result.scene)
+                .put("visual_beats", result.visualBeats)
+                .put("audio_cues", result.audioCues)
+                .put("story_arc", result.storyArc)
                 .put("mood", result.mood)
                 .put("chapter", "Volgens online bronnen".equals(result.chapterStatus) ? result.chapter : "")
                 .put("creator_note", creatorNote)
                 .toString();
         String prompt =
-            "You write captions for WolveroGaming, a personal English-language TikTok gaming channel. " +
-            "Your primary and sufficient creative material is the factual VIDEO ANALYSIS and AUDIO. " +
-            "Creator notes are OPTIONAL and often empty. Never require, request or assume extra explanation. " +
-            "Find the interesting visual detail, action, surprise, funny contrast or feeling yourself. " +
-            "THE FIVE CAPTIONS MUST BE IN NATURAL IDIOMATIC ENGLISH, NOT DUTCH OR FLEMISH, " +
-            "regardless of what language the creator note uses. Never translate the creator note verbatim; " +
-            "capture its intention in effortless spoken English. " +
-            "Your tone is understated, dry, occasionally gonzo and self-aware, sometimes gleefully absurd, " +
-            "and very quiet when a scene is genuinely moving. " +
-            "Think of a player enjoying a specific unexpected moment, not a brand writing advertising slogans. " +
-            "Some examples of the creator's preferred voice (REFERENCE FOR TONE ONLY; NEVER COPY THEM): " +
-            "'Playing on the edge!', 'Perfect extraction. Would recommend.', " +
-            "'Halloween is over. Time to put the decorations back in the basement.', " +
-            "'People of the world… behold… THE MINOTAUR!', " +
-            "'No signal. Only loss.', 'Let's get this party started!', " +
-            "'I AM THE WOLVERIIIIINE!!!'. " +
-            "These examples show a taste for short, sharp, sometimes deliberately mundane remarks that let " +
-            "the gameplay provide the punchline. Don't imitate the same sentence pattern every time. " +
-            "ABSOLUTE RULES: grounded in the video; no scene or dialogue fabrication; no clickbait lies; " +
-            "no unearned emotion; no spoilers that aren't visible; no explaining the joke. " +
-            "Avoid generic AI phrases such as 'This is cinema', 'When gaming meets chaos', " +
-            "'One epic journey', 'Buckle up', 'You won't believe', 'Just another day in', " +
-            "'POV:' by default, 'plot twist' and 'unlocked' clichés. " +
-            "Prefer 3–13 words, a maximum of 18, and at most one fitting emoji or no emoji. " +
-            "Vary sentence structure. Three captions should be very short. Do not include hashtags. " +
-            "If this is about bereavement, sincere grief or loss, produce five dignified and restrained lines, " +
-            "NO gonzo humour, NO corny platitudes, NO forced emotional language. " +
-            "For comedy/action, offer diverse options, including a deadpan line, an oddball line, and " +
-            "one that feels like a surprising personal reaction. " +
-            "Return ONLY JSON: {\"captions\": [{\"style\":\"short English style name\",\"text\":\"English caption\"}, ...]} " +
-            "with EXACTLY FIVE distinct captions. DO NOT translate the field names. " +
-            "CLIP FACTS (from actual video analysis, not creative instructions): " + facts;
+            "You are the senior creative editor behind @wolverogaming, an English-language gaming TikTok " +
+            "account run by a real person. You are NOT a generic TikTok caption generator. " +
+            "The video/audio analysis below is your PRIMARY evidence. The creator_note is OPTIONAL " +
+            "and typically blank; never ask for context and never depend on it. " +
+            "Write EXACTLY FIVE natural English one-line captions that could actually be posted. " +
+            "Goal: at least one genuinely clever, specific choice that a picky gamer would keep. " +
+            "Understand the emotional/comedic beat of the entire clip FIRST. " +
+            "For a cinematic, romantic, melancholy or poignant montage, respect its actual audio " +
+            "and progression. The soundtrack may already carry the emotion, so keep language subtle. " +
+            "Never force the same romance/crime joke five ways; never insert cops, car theft, " +
+            "gunfights or events just because of a game's genre. " +
+            "For absurd or funny clips, use dry understatement, unusual reactions, " +
+            "very short deadpan remarks, or occasional gleeful exaggeration. " +
+            "For sadness, use restraint rather than corny inspiration or jokes. " +
+            "Creative diversity is essential: find FIVE DISTINCT angles, not five phrasings of " +
+            "the same premise. Work from different moments, contrasts, relationships, punchlines " +
+            "or emotional textures ACTUALLY present in the clip. " +
+            "You may have up to two captions using the same underlying premise, NEVER three. " +
+            "Before output, privately draft at least ten candidates, remove repetitive or " +
+            "generic ones, and choose the five most differentiated. " +
+            "At least two should be under seven words. Prefer 3 to 13 words, never over 18. " +
+            "Sometimes an extremely simple sentence wins. No hashtags; emoji only if indispensable. " +
+            "Avoid overusing full game titles, especially franchise numbering; only name the " +
+            "installment if confidently verified or explicitly provided by the creator. " +
+            "Do not invent specific actions or imply that something is about to happen if " +
+            "it is not established in the clip. The best punchline is often a completely straight " +
+            "description with one unexpected twist. Avoid clickbait and overexplaining. " +
+            "STYLE REFERENCES FOR VIBE ONLY (don't recycle automatically): " +
+            "'A love story with a wanted level.' (tiny contrast, romantic montage), " +
+            "'Perfect extraction. Would recommend.' (dry disaster humour), " +
+            "'No signal. Only loss.' (quiet grief), " +
+            "'Halloween's over. Time to put the decorations back in the basement.' (deadpan), " +
+            "'People of the world… behold… THE MINOTAUR!' (playful theatrical absurdity). " +
+            "AVOID generic caption-generator templates: 'but make it...', " +
+            "'Nothing says X like Y', 'Bonnie and Clyde, [place] edition', " +
+            "'Honestly didn't think X had room for Y', 'Just another day in...', " +
+            "'POV:', 'This is cinema', 'Plot twist', 'When X meets Y'. " +
+            "Do not use the word 'honestly' as a crutch. Do not summarize a game's marketing pitch. " +
+            "All five text values MUST be idiomatic ENGLISH, never Dutch/Flemish, regardless " +
+            "of source language. Caption labels should be short natural English phrases " +
+            "describing the creative angle and should vary with the scene. " +
+            "Return JSON ONLY with exactly five unique objects: " +
+            "{\"captions\":[{\"style\":\"short English style label\",\"text\":\"caption in English\"}, ...]}. " +
+            "FACTS VERIFIED FROM VIDEO (not a template): " + facts;
         JSONObject request = new JSONObject()
                 .put("contents", new JSONArray().put(new JSONObject().put("parts",
                         new JSONArray().put(new JSONObject().put("text", prompt)))))
                 .put("generationConfig", new JSONObject()
                         .put("responseMimeType", "application/json")
-                        .put("temperature", 0.84)
-                        .put("maxOutputTokens", 1800));
+                        .put("temperature", 0.9)
+                        .put("maxOutputTokens", 2050));
         return generate(VIDEO_MODEL, request, key);
     }
 
@@ -453,9 +488,52 @@ final class GeminiClient {
         if ("low".equalsIgnoreCase(result.confidence)) result.game = "Niet met zekerheid herkend";
         result.scene = json.optString("scene", "");
         result.mood = json.optString("mood", "");
+        result.audioCues = json.optString("audio_cues", "");
+        result.storyArc = json.optString("story_arc", "");
+        result.gameEvidence = json.optString("game_evidence", "");
+        JSONArray beats = json.optJSONArray("visual_beats");
+        if (beats != null) {
+            StringBuilder b = new StringBuilder();
+            for (int i = 0; i < beats.length() && i < 5; i++) {
+                String beat = beats.optString(i, "").trim();
+                if (!beat.isEmpty()) b.append(b.length() == 0 ? "" : " | ").append(beat);
+            }
+            result.visualBeats = b.toString();
+        }
         result.webQuery = json.optString("search_query", "");
         result.chapter = json.optString("chapter_guess", "");
         return result;
+    }
+
+    private static void resolveRecognizableGameConflict(Result result) {
+        // Version-specific clues help recover from a common franchise mix-up.
+        // Do not override a user's explicitly supplied game title.
+        String game = result.game.toLowerCase(java.util.Locale.ROOT).trim();
+        String clues = (result.scene + " " + result.visualBeats + " " +
+                result.gameEvidence + " " + result.webQuery).toLowerCase(java.util.Locale.ROOT);
+        boolean thinksGta5 = game.equals("grand theft auto v") || game.equals("gta v")
+                || game.equals("gta 5") || game.equals("grand theft auto 5");
+        boolean specificGta6 = clues.contains("leonida")
+                || (clues.contains("lucia") && clues.contains("jason"))
+                || clues.contains("grand theft auto vi") || clues.contains("gta vi");
+        if (thinksGta5 && specificGta6) {
+            result.game = "Grand Theft Auto VI";
+            result.confidence = "medium";
+        }
+    }
+
+    private static boolean hasGameVersionConflict(Result result) {
+        String game = result.game.toLowerCase(java.util.Locale.ROOT).trim();
+        boolean isGta6 = game.equals("gta vi") || game.equals("gta 6")
+                || game.equals("grand theft auto vi") || game.equals("grand theft auto 6");
+        boolean isGta5 = game.equals("gta v") || game.equals("gta 5")
+                || game.equals("grand theft auto v") || game.equals("grand theft auto 5");
+        for (Caption caption : result.captions) {
+            String text = caption.text;
+            if (isGta6 && text.matches("(?is).*\\b(?:grand theft auto|gta)\\s*(?:v|5)\\b.*")) return true;
+            if (isGta5 && text.matches("(?is).*\\b(?:grand theft auto|gta)\\s*(?:vi|6)\\b.*")) return true;
+        }
+        return false;
     }
 
     private static void mergeVerification(Result result, Response verification) {
