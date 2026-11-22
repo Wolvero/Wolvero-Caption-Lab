@@ -61,6 +61,8 @@ public final class MainActivity extends Activity {
     private ProgressBar progressBar;
     private Button analyzeButton;
     private EditText gameInput, creatorNoteInput;
+    private LinearLayout contextExtra;
+    private Button contextToggle;
     private ImageView previewImage;
     private ScrollView scroll;
 
@@ -250,36 +252,45 @@ public final class MainActivity extends Activity {
         addSpacer(content, 15);
         LinearLayout guidance = card();
         content.addView(guidance, lp(-1, -2));
-        addText(guidance, "GIVE IT A HEAD START", 11, PURPLE, true, 0);
-        addText(guidance, "Welke game?", 17, WHITE, true, 11);
-        addText(guidance, "Laat leeg als je de game automatisch wilt laten herkennen.", 12, MUTED, false, 7);
+        addText(guidance, "GAME (OPTIONEEL)", 11, PURPLE, true, 0);
+        addText(guidance, "De app herkent je game zelf. Weet je dat hij zich vergist? Dan kun je hier de titel invullen.", 12, MUTED, false, 9);
         gameInput = new EditText(this);
         gameInput.setSingleLine(true);
         gameInput.setTextColor(WHITE);
         gameInput.setHintTextColor(MUTED);
         gameInput.setTextSize(15);
         gameInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        gameInput.setHint("Bijv. Grounded 2, Helldivers 2 …");
+        gameInput.setHint("Automatisch herkennen");
         gameInput.setBackground(shape(INNER, 12, STROKE));
         gameInput.setPadding(dp(14), dp(11), dp(14), dp(11));
         LinearLayout.LayoutParams glp = lp(-1, 52);
-        glp.topMargin = dp(12);
+        glp.topMargin = dp(13);
         guidance.addView(gameInput, glp);
 
-        addText(guidance, "Het verhaal achter de clip", 16, WHITE, true, 20);
-        addText(guidance, "Optioneel. Eén zinnetje helpt de AI om jouw grap of gevoel te begrijpen.", 12, MUTED, false, 7);
+        addSpacer(guidance, 11);
+        contextToggle = action("＋  Extra context toevoegen (optioneel)", false, v -> {
+            boolean open = contextExtra.getVisibility() == View.VISIBLE;
+            contextExtra.setVisibility(open ? View.GONE : View.VISIBLE);
+            contextToggle.setText(open ? "＋  Extra context toevoegen (optioneel)" :
+                    "−  Extra context verbergen");
+        });
+        guidance.addView(contextToggle, lp(-1, 48));
+        contextExtra = vertical();
+        contextExtra.setVisibility(View.GONE);
+        guidance.addView(contextExtra, lp(-1, -2));
+        addText(contextExtra, "Alleen als je zelf iets wilt meegeven", 13, WHITE, true, 15);
         creatorNoteInput = new EditText(this);
         creatorNoteInput.setTextColor(WHITE);
         creatorNoteInput.setHintTextColor(MUTED);
         creatorNoteInput.setTextSize(14);
         creatorNoteInput.setGravity(Gravity.TOP | Gravity.START);
         creatorNoteInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-        creatorNoteInput.setHint("Bijv. ik doe alsof ik die enorme slang niet herken …");
+        creatorNoteInput.setHint("Bijvoorbeeld: niet verklappen wat er in de verte kruipt.");
         creatorNoteInput.setBackground(shape(INNER, 12, STROKE));
         creatorNoteInput.setPadding(dp(14), dp(13), dp(14), dp(13));
         LinearLayout.LayoutParams clp = lp(-1, 95);
-        clp.topMargin = dp(12);
-        guidance.addView(creatorNoteInput, clp);
+        clp.topMargin = dp(11);
+        contextExtra.addView(creatorNoteInput, clp);
 
         addSpacer(content, 15);
         analyzeButton = action("✨  CREATE MY CAPTIONS   →", true, v -> beginAnalysis());
@@ -495,6 +506,11 @@ public final class MainActivity extends Activity {
                     selectedVideo = ready;
                     selectedName = name;
                     selectedMime = mime;
+                    // Do not allow hidden context from another clip to affect the next analysis.
+                    gameInput.setText("");
+                    creatorNoteInput.setText("");
+                    contextExtra.setVisibility(View.GONE);
+                    contextToggle.setText("＋  Extra context toevoegen (optioneel)");
                     videoName.setText(name);
                     sizeLabel.setText(String.format(Locale.getDefault(), "%.1f MB · klaar om te analyseren", fileSize / 1024.0 / 1024.0));
                     showThumbnail(ready);
