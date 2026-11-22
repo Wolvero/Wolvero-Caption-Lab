@@ -1,53 +1,51 @@
 # Wolvero Caption Lab · Android
 
-Een echte Android-app voor TikTok-gameplaycaptions, gemaakt voor persoonlijk gebruik: videobestanden tot **80 MiB**, game-/scèneherkenning, optionele online hoofdstukverificatie, 5 captions in het Engels met variatie in toon.
+**Wolvero Caption Lab 1.0** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
-## Gratis houden
+## Direct de APK downloaden
 
-Gebruik alleen een **gratis Gemini API-project zonder billing** via https://aistudio.google.com/api-keys . De app heeft geen abonnement of betaalmodule. Video- en captionanalyse gebeurt via `gemini-3.5-flash-lite`, dat een gratis API-tier heeft (met quota en mogelijke wijzigingen).
+[**Download Wolvero Caption Lab voor Android**](https://github.com/Wolvero/Wolvero-Caption-Lab/releases/latest/download/Wolvero-Caption-Lab.apk)
 
-Voor **automatische online verificatie** is een tweede gratis API-sleutel aan te raden, via https://app.tavily.com . Tavily's **Researcher**-plan biedt **1.000 gratis credits per maand zonder kredietkaart**. Deze app gebruikt **één basic search (1 credit)** per video, zonder extra betaalopties of upgrades. De Tavily-resultaten worden vervolgens door de gratis Gemini-tekst-API voorzichtig op hoofdstukmatch beoordeeld. Er wordt geen hoofdstuk verzonnen als de bronnen onvoldoende zijn.
+De APK wordt automatisch via GitHub Actions gebouwd en gepubliceerd als GitHub Release op deze openbare repository. Op een Android-telefoon kun je het APK-bestand downloaden, eventueel toestemming geven voor installatie uit deze bron en de app openen. Geen GitHub-login nodig voor de publieke Release.
 
-Zonder Tavily-sleutel probeert de app tijdelijk Gemini 2.5 Flash met Google Search, omdat de bestaande Google 2.5 gratis zoekquota heeft. Deze gratis zoekroute eindigt **30 november 2026**. **Vanaf 1 december 2026 schakelt de app die oude Google-zoekroute automatisch uit** om een betaalde zoekroute te vermijden. Videoherkenning en captions blijven met alleen de gratis Gemini-sleutel mogelijk; de Tavily-sleutel houdt automatische online verificatie daarna beschikbaar.
+## Eerste gebruik: twee sleutels, één keer instellen
 
-**Belangrijk:** de app kan de facturatiestatus van jouw API-projecten niet zelf controleren. Kies bij beide diensten uitsluitend de gratis tiers, schakel billing/pay-as-you-go niet in en controleer de limieten in de provideraccounts.
+Tik op **Instellingen** (tandwiel) of gebruik het eenmalige instelvenster bij de eerste start:
 
-> Privacy: Google kan in de gratis API-tier uploads en prompts gebruiken om zijn producten te verbeteren. Video's worden voor analyse tijdelijk geüpload naar Google. Tavily ziet alleen een tekstuele zoekvraag over de game, niet jouw video. Upload niets dat je niet met die diensten wilt delen.
+1. Plak de eigen **Gemini API key** van [Google AI Studio](https://aistudio.google.com/api-keys).
+2. Plak de eigen **Tavily API key** van [Tavily](https://app.tavily.com).
+3. Tik **Bewaar & start**. Daarna kies je een video en tik je op **Create my captions**.
 
-## Een APK bouwen zonder zelf Android Studio te installeren
+De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze via het tandwiel vervangen.
 
-1. Maak op GitHub een **nieuw leeg repository (Public mag; zet nooit sleutels in de code)** (bijvoorbeeld `Wolvero-Caption-Lab`). Geen README of .gitignore laten genereren.
-2. Upload de **inhoud** van deze ZIP rechtstreeks in de hoofdmap van het nieuwe repository. Zorg dat `.github/workflows/android.yml` ook meegaat (verborgen bestanden inschakelen bij het uitpakken).
-3. Open het GitHub-tabblad **Actions** → **Build Android APK**. Wacht tot de build groen is.
-4. Open de voltooide run en download het artifact **Wolvero-Caption-Lab-APK**. Pak het ZIP-bestand uit, installeer `app-debug.apk` op Android.
-5. Tik in de app op **API-sleutel instellen** en plak je eigen Gemini API-sleutel. Voor de automatische online hoofdstukcontrole plak je daarnaast optioneel een gratis **Tavily API-sleutel**.
-6. Beide sleutels blijven versleuteld op je toestel en zitten niet ingebakken in de APK. Kies MP4/video tot 80 MiB → **Analyseer video**. Verwacht enige verwerkingstijd voor upload en videoanalyse.
+De gebruiker heeft zelf reeds de sleutels gemaakt en hoeft die niet opnieuw aan te vragen.
 
-### Wat gebeurt er bij analyse?
+## Hoe de analyse werkt
 
-1. Kopie van geselecteerde video naar tijdelijke lokale app-cache (max. 80 MiB).
-2. Resumable upload via HTTPS naar Google Gemini Files API.
-3. Gemini 3.5 Flash-Lite analyseert video en audio, herkent de vermoedelijke game en scène en geeft 5 captions.
-4. Als een gametitel herkenbaar is, doet Tavily (mits ingesteld) één basiszoekopdracht naar een passende gamewiki of walkthrough. Gemini beoordeelt daarna voorzichtig de gevonden bronnen. Zonder Tavily probeert de app tot 30 november 2026 de gratis Google Search in Gemini 2.5 Flash. Een hoofdstuk krijgt geen bevestigingslabel zonder bronnen.
-5. Resultaten en bronlinks verschijnen in de app. Je kunt een caption tikken om te kopiëren.
-6. Uploaded videobestand wordt best-effort via Files API verwijderd; de lokale cache wordt opgeschoond bij de volgende video-selectie.
+- De geselecteerde video wordt tijdelijk naar een private app-cache gekopieerd, tot 80 MiB.
+- De Gemini Files API ontvangt de video via HTTPS. Het model `gemini-3.5-flash-lite` analyseert de beelden, schermtekst, geluid en context, en genereert vijf Engelstalige captionstijlen.
+- De app probeert de waarschijnlijke game en scène te herkennen. Als die herkenbaar zijn, zoekt Tavily via één basic query naar passende walkthroughs en gamewiki's.
+- Gemini vergelijkt de webresultaten met de scène. Een hoofdstuk wordt alleen als bevestigd getoond als de gevonden bronnen de precieze scène voldoende ondersteunen; anders staat er duidelijk dat een hoofdstuk onbekend of onzeker is.
+- Met één tik kopieer je een caption. De video wordt na gebruik best-effort uit de Gemini Files API verwijderd.
 
-## Grenzen / nog niet getest
+**Het hoofdscherm bevat bewust géén 'Test verbindingen'-knop of BETA-label.** De sleutelconfiguratie zit achter het tandwiel, en bij problemen verschijnt een normale foutmelding.
 
-- Dit is een eerste bouwbare **proefversie**, geen al geteste live dienst. Zonder eigen Gemini API key en Android-build kan hier geen daadwerkelijke API-respons bewezen worden.
-- Herkenning is probabilistisch. Een game of exacte hoofdstuknaam is niet altijd afleidbaar uit kort gameplaymateriaal. Zoekresultaten zijn aanwijzingen, geen bewijs van een exact fragment.
-- Google en Tavily kunnen gratis limieten en modelbeschikbaarheid veranderen. Videoanalyse functioneert alleen zolang de gekozen free-tier-API de calls toestaat.
-- De app maakt *goede captionopties*, geen garanties op viraliteit.
+## Gratis & privacy
 
-## Technisch
+Gebruik uitsluitend een Google API-project met **Free tier, zonder billing** en het gratis Tavily-abonnement. Gratis toegang heeft quota en kan door de providers aangepast of beperkt worden. De app heeft geen betaaloptie en kan niet verhinderen dat een gebruiker elders facturatie inschakelt.
 
-Android 8+, Java 17, Gradle 8.10.2, Android Gradle Plugin 8.7.3, minSdk 26, compileSdk 35. Geen third-party Android dependencies, geen backend, geen hardcoded API key, alleen HTTPS-verbindingen met `generativelanguage.googleapis.com` en optioneel `api.tavily.com`.
+Video's worden voor de analyse met Google gedeeld. Tavily krijgt de tekstuele zoekvraag over de game, niet het videobestand. Controleer zelf of video's geschikt zijn om naar deze diensten te verzenden. De gratis Google API-tier kan uploads gebruiken om producten te verbeteren.
 
-## Bronvermeldingen
+## Technische details
 
-- https://ai.google.dev/gemini-api/docs/video-understanding
-- https://ai.google.dev/gemini-api/docs/files
-- https://ai.google.dev/gemini-api/docs/pricing
-- https://ai.google.dev/gemini-api/docs/grounding
-- https://docs.tavily.com/documentation/api-credits
-- https://docs.tavily.com/documentation/api-reference/endpoint/search
+- Android 8+; Java 17; Android Gradle Plugin 8.7.3; SDK 35
+- Android KeyStore AES/GCM voor de API-sleutels
+- Android-native interface zonder externe UI-libraries
+- GitHub Actions bouwt de APK en publiceert die als publieke Release
+- GitHub Actions levert nu een **debug-ondertekende** APK. Voor naadloze updates in toekomstige versies is een stabiele privé-signing key nodig; zonder die sleutel kan een nieuwe build herinstallatie vereisen
+
+## Status
+
+De Android-app is gecompileerd en als APK gepubliceerd. **Een echte upload en de API-antwoorden moeten nog op het toestel worden gevalideerd met de eigen sleutels.** AI-herkenning is probabilistisch, geen garantie op een exact hoofdstuk of viraliteit.
+
+Bronnen: [Gemini-video](https://ai.google.dev/gemini-api/docs/video-understanding), [Gemini Files](https://ai.google.dev/gemini-api/docs/files), [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [Tavily API](https://docs.tavily.com/documentation/api-reference/endpoint/search).
