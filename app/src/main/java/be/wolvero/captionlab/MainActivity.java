@@ -335,7 +335,7 @@ public final class MainActivity extends Activity {
         fp.topMargin = dp(35);
         footer.setGravity(Gravity.CENTER);
         footer.addView(text("MADE FOR THE MOMENTS WORTH SHARING", 10, MUTED, true));
-        TextView foot = text("WOLVEROGAMING  •  NO SUBSCRIPTION", 9, PURPLE, true);
+        TextView foot = text("WOLVEROGAMING", 9, PURPLE, true);
         LinearLayout.LayoutParams footp = lp(-2, -2);
         footp.topMargin = dp(7);
         footer.addView(foot, footp);
@@ -410,7 +410,7 @@ public final class MainActivity extends Activity {
         layout.addView(tavilyInput, ti);
 
         addText(layout, "Al ingesteld? Laat een veld leeg om de bewaarde sleutel te behouden.", 11, MUTED, false, 14);
-        addText(layout, "Gebruik uitsluitend gratis API-projecten zonder billing. Video's worden voor de analyse met Google gedeeld.", 11, MUTED, false, 12);
+        addText(layout, "De video wordt voor de analyse naar Gemini verstuurd.", 11, MUTED, false, 12);
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(layout)
                 .setNegativeButton("Annuleren", null)
@@ -559,6 +559,8 @@ public final class MainActivity extends Activity {
         try { optionalKey = SecureKeys.loadTavily(this); }
         catch (Exception ignored) { optionalKey = ""; }
         tavilyKey = optionalKey;
+        final String gameHint = gameInput == null ? "" : gameInput.getText().toString().trim();
+        final String creatorNote = creatorNoteInput == null ? "" : creatorNoteInput.getText().toString().trim();
         working = true;
         setButtonReady();
         results.removeAllViews();
@@ -566,7 +568,7 @@ public final class MainActivity extends Activity {
         tasks.execute(() -> {
             try {
                 GeminiClient.Result result = GeminiClient.analyze(selectedVideo, selectedMime, apiKey, tavilyKey,
-                        status -> runOnUiThread(() -> setProgress(status, true)));
+                        gameHint, creatorNote, status -> runOnUiThread(() -> setProgress(status, true)));
                 runOnUiThread(() -> {
                     setProgress("", false);
                     working = false;
@@ -591,9 +593,11 @@ public final class MainActivity extends Activity {
         addSpacer(results, 13);
         LinearLayout context = card();
         results.addView(context, lp(-1, -2));
-        addText(context, "GEDETECTEERDE GAME", 11, MUTED, true, 0);
+        addText(context, "GAME", 11, MUTED, true, 0);
         addText(context, data.game, 23, WHITE, true, 7);
-        addText(context, "Herkenningszekerheid: " + translateConfidence(data.confidence), 12, MUTED, false, 6);
+        if ("provided".equals(data.confidence)) {
+            addText(context, "Door jou opgegeven", 12, GOOD, false, 6);
+        }
         if (!data.scene.isEmpty()) {
             addText(context, "WAT ER GEBEURT", 11, PURPLE, true, 20);
             addText(context, data.scene, 14, WHITE, false, 7);
@@ -638,7 +642,6 @@ public final class MainActivity extends Activity {
             });
             item.addView(copy, lp(-1, 44));
         }
-        addText(results, "Tip: kies zelf de beste hook. De app kan kansen op bereik niet garanderen.", 11, MUTED, false, 5);
         scroll.post(() -> scroll.smoothScrollTo(0, results.getTop()));
     }
     private String translateConfidence(String s) {
