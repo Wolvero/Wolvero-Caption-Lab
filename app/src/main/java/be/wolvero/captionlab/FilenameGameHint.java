@@ -25,7 +25,8 @@ final class FilenameGameHint {
      */
     static String displayTitle(String prefix) {
         if (prefix == null || prefix.isEmpty()) return "";
-        return prefix.replaceAll("(?<=[a-z])(?=[A-Z])", " ")
+        return prefix.replaceAll("(?<=[A-Z])(?=[A-Z][a-z])", " ")
+                .replaceAll("(?<=[a-z])(?=[A-Z])", " ")
                 .replaceAll("(?<=[A-Za-z])(?=[0-9])", " ")
                 .trim();
     }
