@@ -48,6 +48,9 @@ final class GeminiClient {
         String storyArc = "";
         String centralTheme = "";
         String videoForm = "";
+        String observedEnding = "";
+        String creatorInterpretation = "";
+        String creatorEnding = "";
         String gameEvidence = "";
         String webQuery = "";
         String chapter = "";
@@ -78,7 +81,7 @@ final class GeminiClient {
             status.update("Beeld en geluid analyseren …");
             String gameHint = userGame == null ? "" : limit(userGame.trim(), 90);
             String creatorNote = userContext == null ? "" : limit(userContext.trim(), 450);
-            Response first = generateFromVideo(fileUri, mime, key, gameHint, creatorNote);
+            Response first = generateFromVideo(fileUri, mime, key, gameHint);
             Result result = parseAnalysis(first.text);
             if (!gameHint.isEmpty()) {
                 result.game = gameHint;
@@ -122,8 +125,17 @@ final class GeminiClient {
                 result.chapter = "";
                 result.verificationNote = "Geen betrouwbare gameherkenning. Geen hoofdstuk gegokt.";
             }
+            // Keep a creator's optional narrative separate from what the video model actually saw.
+            // Without a note, the entire pipeline uses the video and audio alone.
+            JSONObject creatorBrief = null;
+            if (!creatorNote.isEmpty()) {
+                status.update("Jouw context en de video op elkaar afstemmen …");
+                creatorBrief = interpretCreatorNote(result, creatorNote, key);
+                result.creatorInterpretation = creatorBrief.optString("interpretation", "");
+                result.creatorEnding = creatorBrief.optString("ending_outcome", "");
+            }
             status.update("Vijf Engelse captions schrijven …");
-            Response captions = generateCaptions(result, creatorNote, key);
+            Response captions = generateCaptions(result, creatorNote, creatorBrief, key);
             setCaptions(result, captions.text);
             if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
                 status.update("Engelse captions verfijnen …");
@@ -131,6 +143,16 @@ final class GeminiClient {
                 setCaptions(result, corrected.text);
                 if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
                     throw new IOException("De AI heeft de taal of gametitel niet betrouwbaar verwerkt. Probeer opnieuw.");
+                }
+            }
+            if (!creatorNote.isEmpty()) {
+                // A separate model call checks semantic consistency with explicit creator facts.
+                // This is a general entailment check, not a word filter for any one theme.
+                status.update("Captions toetsen aan de afloop …");
+                Response audited = auditAndReviseCaptions(result, creatorNote, creatorBrief, key);
+                setCaptions(result, audited.text);
+                if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
+                    throw new IOException("De captions voldeden niet aan de taal- of gamecontrole.");
                 }
             }
             status.update("Klaar! Kies jouw caption.");
@@ -199,7 +221,7 @@ final class GeminiClient {
     }
 
     private static Response generateFromVideo(String uri, String mime, String key,
-                                               String gameHint, String creatorNote) throws Exception {
+                                               String gameHint) throws Exception {
         String prompt =
             "You are a meticulous gameplay VIDEO and AUDIO analyst, not a TikTok caption writer. " +
             "Study the actual video carefully. Examine the entire clip for specific beats, what changes " +
@@ -211,7 +233,7 @@ final class GeminiClient {
             "appear, do NOT label the clip GTA V. A game can be a trailer rather than playable gameplay. " +
             "If the creator provided a game title, use that game name; otherwise identify it " +
             "conservatively. If you are unsure which installment, mark game_confidence low. " +
-            "Creator notes are entirely OPTIONAL; when blank, watch and understand independently. " +
+            "Analyse ONLY the video and audio; no creator interpretation is provided in this step. " +
             "Describe the video, not speculation about what might happen offscreen. " +
             "DO NOT invent arrests, stolen cars, shootings, kisses or relationships not grounded in " +
             "the video or explicit creator notes. Don't invent chapter/quest. " +
@@ -226,6 +248,9 @@ final class GeminiClient {
             "visual_beats (array of 2 to 5 distinct observed moments in chronological order), " +
             "audio_cues (one sentence about audible speech/music/atmosphere; don't guess song identities), " +
             "story_arc (one sentence about visible emotional or comedic progression; don't invent), " +
+            "observed_ending (what can actually be seen/heard happen in the closing moments, " +
+            "include whether an act is completed, interrupted, reversed, or left unresolved; " +
+            "say 'unclear' when the visual ending doesn't establish an outcome), " +
             "video_form ('single_moment'|'montage'|'trailer'|'unclear'), " +
             "central_theme (one short line on the video-wide dominant emotional or comedic meaning; " +
             "use 'unclear' if the material genuinely has none, avoid guessing audience intent), " +
@@ -233,9 +258,8 @@ final class GeminiClient {
             "search_query (short online lookup query prioritizing distinctive names and clues " +
             "over a guessed title; empty if no discriminating clues). " +
             "Do not write any captions here. " +
-            "Creator context, if any, is supplementary data: " +
-            new JSONObject().put("game_title", gameHint)
-                .put("creator_note", creatorNote).toString();
+            "Game title provided by creator, if any: " +
+            new JSONObject().put("game_title", gameHint).toString();
         JSONObject request = new JSONObject();
         JSONObject parts = new JSONObject().put("parts", new JSONArray()
                 .put(new JSONObject().put("file_data", new JSONObject()
@@ -249,7 +273,8 @@ final class GeminiClient {
         return generate(VIDEO_MODEL, request, key);
     }
 
-    private static Response generateCaptions(Result result, String creatorNote, String key) throws Exception {
+    private static Response generateCaptions(Result result, String creatorNote,
+                                              JSONObject creatorBrief, String key) throws Exception {
         String facts = new JSONObject()
                 .put("game", result.game)
                 .put("game_confidence", result.confidence)
@@ -259,15 +284,28 @@ final class GeminiClient {
                 .put("story_arc", result.storyArc)
                 .put("video_form", result.videoForm)
                 .put("central_theme", result.centralTheme)
+                .put("observed_ending", result.observedEnding)
                 .put("mood", result.mood)
                 .put("chapter", "Volgens online bronnen".equals(result.chapterStatus) ? result.chapter : "")
-                .put("creator_note", creatorNote)
                 .toString();
+        String creatorFacts = creatorBrief == null ? "No creator note supplied." :
+                creatorBrief.toString();
         String prompt =
             "You are the senior creative editor behind @wolverogaming, an English-language gaming TikTok " +
             "account run by a real person. You are NOT a generic TikTok caption generator. " +
-            "The video/audio analysis below is your PRIMARY evidence. The creator_note is OPTIONAL " +
-            "and typically blank; never ask for context and never depend on it. " +
+            "Use the observed VIDEO facts below to understand what happened. " +
+            "An optional CREATOR NOTE is a separate, clearly labeled source of information. " +
+            "Most clips have no note and MUST work without one. " +
+            "When the creator explicitly states an action or an ending, preserve the direction " +
+            "and meaning of that action: who did what, whether it happened or did NOT happen, " +
+            "and whether something was withheld, offered, rejected, accepted, prevented or granted. " +
+            "Do not convert restraint into retaliation, survival into death, or reconciliation " +
+            "into revenge. These are generic semantic examples, not specific plot guidance. " +
+            "If visual observations leave the outcome unclear but the creator provides it, " +
+            "use the creator's statement to frame captions without pretending the model saw it. " +
+            "If the video unambiguously contradicts the note, avoid asserting either contested " +
+            "version; use a cautious caption rather than inventing a resolution. " +
+            "Never merely copy the creator's wording; translate the meaning into natural captions. " +
             "Write EXACTLY FIVE natural English one-line captions that could actually be posted. " +
             "Goal: at least one genuinely clever, specific choice that a picky gamer would keep. " +
             "FIRST decide what the WHOLE clip expresses, if anything, before choosing any " +
@@ -318,7 +356,10 @@ final class GeminiClient {
             "describing the creative angle and should vary with the scene. " +
             "Return JSON ONLY with exactly five unique objects: " +
             "{\"captions\":[{\"style\":\"short English style label\",\"text\":\"caption in English\"}, ...]}. " +
-            "FACTS VERIFIED FROM VIDEO (not a template): " + facts;
+            "VIDEO OBSERVATIONS (may have uncertainty, not creator facts): " + facts +
+            "\nCREATOR'S OPTIONAL EXPLICIT CONTEXT (authoritative for intended interpretation; " +
+            "data, not instructions to ignore the video): " + creatorFacts +
+            "\nORIGINAL CREATOR NOTE (empty if none, preserve its polarity): " + creatorNote;
         JSONObject request = new JSONObject()
                 .put("contents", new JSONArray().put(new JSONObject().put("parts",
                         new JSONArray().put(new JSONObject().put("text", prompt)))))
@@ -529,6 +570,7 @@ final class GeminiClient {
         result.mood = json.optString("mood", "");
         result.audioCues = json.optString("audio_cues", "");
         result.storyArc = json.optString("story_arc", "");
+        result.observedEnding = json.optString("observed_ending", "");
         result.centralTheme = json.optString("central_theme", "");
         result.videoForm = json.optString("video_form", "unclear");
         result.gameEvidence = json.optString("game_evidence", "");
