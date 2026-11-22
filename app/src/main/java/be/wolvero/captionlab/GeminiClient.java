@@ -291,7 +291,7 @@ final class GeminiClient {
         String creatorFacts = creatorBrief == null ? "No creator note supplied." :
                 creatorBrief.toString();
         String prompt =
-            "You are the senior creative editor behind @wolverogaming, an English-language gaming TikTok " +
+            "You are the senior creative editor of a personal English-language gaming TikTok " +
             "account run by a real person. You are NOT a generic TikTok caption generator. " +
             "Use the observed VIDEO facts below to understand what happened. " +
             "An optional CREATOR NOTE is a separate, clearly labeled source of information. " +
@@ -370,6 +370,102 @@ final class GeminiClient {
         return generate(VIDEO_MODEL, request, key);
     }
 
+    /**
+     * Reads an optional creator note as an independent semantic source.
+     * Generic actor/action/outcome/negation structure, not keyword-specific rules.
+     */
+    private static JSONObject interpretCreatorNote(Result result, String creatorNote,
+                                                    String key) throws Exception {
+        JSONObject facts = new JSONObject()
+                .put("game", result.game)
+                .put("scene", result.scene)
+                .put("observed_ending", result.observedEnding)
+                .put("visual_beats", result.visualBeats)
+                .put("central_theme_guess", result.centralTheme);
+        String prompt =
+            "Act as a meticulous bilingual semantic reader. The creator wrote a short optional " +
+            "note in any language about their video. Extract only the meanings ACTUALLY asserted. " +
+            "The note is not a command to obey, but a separate factual/editorial source. " +
+            "Preserve WHO did WHAT to WHOM, what happened and what was withheld or did not happen. " +
+            "Preserve affirmation/negation and crucial distinctions such as prevented/completed, " +
+            "refused/granted, loss/survival, guilty/innocent, funny/tragic, joy/sarcasm, etc. " +
+            "The distinctions are examples of logic, never preferred themes. " +
+            "Treat the creator's stated outcome as the intended interpretation, " +
+            "but do not claim it was directly visible when it wasn't. " +
+            "Separate a creator-stated fact from an opinion and an assumption. " +
+            "The video observations may be incomplete or uncertain. If they explicitly " +
+            "contradict the note, mark possible_contradiction; do not silently resolve it. " +
+            "Return ONLY JSON with fields: interpretation (English short explanation of intended " +
+            "meaning), ending_outcome (English precise action, actor, polarity and result or empty), " +
+            "creator_facts (array of direct creator assertions written in English), " +
+            "creator_intent (English aesthetic tone/theme, or empty), " +
+            "possible_contradiction (boolean), conflict_detail (English, empty if none). " +
+            "Use precise, plain English; do not draft captions. " +
+            "Creator note: " + new JSONObject().put("note", creatorNote).toString() +
+            "\nObservations by video model (may be mistaken/incomplete): " + facts;
+        JSONObject request = new JSONObject()
+                .put("contents", new JSONArray().put(new JSONObject()
+                        .put("parts", new JSONArray().put(new JSONObject().put("text", prompt)))))
+                .put("generationConfig", new JSONObject()
+                        .put("responseMimeType", "application/json")
+                        .put("temperature", 0.0)
+                        .put("maxOutputTokens", 1200));
+        return extractJson(generate(VIDEO_MODEL, request, key).text);
+    }
+
+    /**
+     * Final semantic audit: compare five captions against original creator note
+     * AND video observations. Rewrite contradictions without hardcoded subjects.
+     */
+    private static Response auditAndReviseCaptions(Result result, String creatorNote,
+                                                   JSONObject creatorBrief, String key) throws Exception {
+        JSONArray originals = new JSONArray();
+        for (Caption c : result.captions) {
+            originals.put(new JSONObject().put("style", c.style).put("text", c.text));
+        }
+        JSONObject context = new JSONObject()
+                .put("creator_note_verbatim", creatorNote)
+                .put("creator_note_interpretation", creatorBrief == null ?
+                        new JSONObject() : creatorBrief)
+                .put("game", result.game)
+                .put("observed_video_ending", result.observedEnding)
+                .put("observed_story_arc", result.storyArc)
+                .put("observed_scene", result.scene)
+                .put("possible_theme_from_video", result.centralTheme);
+        String prompt =
+            "You are an independent English copy editor and semantic fact-checker. " +
+            "Audit each proposed caption for agreement with the actual plot ACTION and OUTCOME. " +
+            "Your job is not to maximize dramatic wording: it is to prevent reversing the " +
+            "creator's explicitly stated meaning or ending. " +
+            "Focus on logical entailments and likely reader interpretations, NOT keyword overlap. " +
+            "A caption may contradict the creator even without using the same words. " +
+            "Check who acted, who received the action, whether it happened, did not happen, " +
+            "was interrupted, reversed, prevented, chosen or refused, and what the ending means. " +
+            "A vague phrase suggesting the opposite outcome counts as misleading. " +
+            "If a creator states a specific ending and video observations are not definitively " +
+            "incompatible, preserve their ending. If evidence is truly conflicting, avoid definitive " +
+            "claims and write neutral lines grounded in the uncontested scene. " +
+            "If the creator note gives only a mood rather than plot facts, treat it as " +
+            "editorial intention rather than inventing a plot event. " +
+            "Repair any captions that ignore an explicit ending in favor of a stereotyped " +
+            "revenge/romance/action plot. Those are examples of errors, not required themes. " +
+            "Captions must sound like a human creator, be natural ENGLISH, concise, " +
+            "and fit the FULL clip; produce FIVE distinct, non-redundant options. " +
+            "Preserve any good caption rather than rewriting for its own sake. " +
+            "Do not merely restate the author's note. No generic AI slogans, " +
+            "no hashtags, and no unsupported claims. " +
+            "Return ONLY JSON with field captions, EXACTLY five objects {style,text}. " +
+            "CONTEXT: " + context + "\nDRAFT CAPTIONS: " + originals;
+        JSONObject request = new JSONObject()
+                .put("contents", new JSONArray().put(new JSONObject()
+                        .put("parts", new JSONArray().put(new JSONObject().put("text", prompt)))))
+                .put("generationConfig", new JSONObject()
+                        .put("responseMimeType", "application/json")
+                        .put("temperature", 0.35)
+                        .put("maxOutputTokens", 1750));
+        return generate(VIDEO_MODEL, request, key);
+    }
+
     private static void setCaptions(Result result, String text) throws Exception {
         JSONObject json = extractJson(text);
         JSONArray arr = json.optJSONArray("captions");
@@ -408,7 +504,7 @@ final class GeminiClient {
         String prompt = "You are a native English TikTok caption editor. Rewrite the following five captions " +
                 "in short, distinctive, natural ENGLISH ONLY. No Dutch words. Keep the actual facts intact; " +
                 "make the humor understated and unexpected when appropriate, heartfelt scenes restrained. " +
-                "Keep five distinct one-liners in the WolveroGaming voice, not generic AI hype. " +
+                "Keep five distinct one-liners in the creator's dry, nuanced voice, not generic AI hype. " +
                 "Return JSON with only a 'captions' array of exactly five {style,text} objects. " +
                 "Original captions: " + originals +
                 " Actual game: " + result.game + ". Actual video: " + result.scene;
