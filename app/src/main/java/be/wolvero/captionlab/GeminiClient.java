@@ -133,7 +133,7 @@ final class GeminiClient {
                     result.chapterStatus = "Online controle niet beschikbaar";
                     result.verificationNote = tavilyKey == null || tavilyKey.isEmpty()
                             ? "Stel ook een gratis Tavily-sleutel in om automatisch te zoeken in spelwiki's."
-                            : "Tavily kon deze scène niet controleren. Geen hoofdstuk gegokt.";
+                            : "Geen betrouwbare bronnen over de game gevonden. Geen hoofdstuk gegokt.";
                 }
             } else {
                 result.chapter = "";
