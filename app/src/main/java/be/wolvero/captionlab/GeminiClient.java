@@ -488,7 +488,9 @@ final class GeminiClient {
                 .put("observed_video_ending", result.observedEnding)
                 .put("observed_story_arc", result.storyArc)
                 .put("observed_scene", result.scene)
-                .put("possible_theme_from_video", result.centralTheme);
+                .put("possible_theme_from_video", result.centralTheme)
+                .put("chosen_editorial_focus", result.editorialFocus)
+                .put("chosen_editorial_tone", result.editorialTone);
         String prompt =
             "You are an independent English copy editor and semantic fact-checker. " +
             "Audit each proposed caption for agreement with the actual plot ACTION and OUTCOME. " +
@@ -508,6 +510,9 @@ final class GeminiClient {
             "revenge/romance/action plot. Those are examples of errors, not required themes. " +
             "Captions must sound like a human creator, be natural ENGLISH, concise, " +
             "and fit the FULL clip; produce FIVE distinct, non-redundant options. " +
+            "Keep the initial scene-specific creative direction and BEST option first; " +
+            "never force five fixed style categories. Choose vivid, human, scroll-worthy " +
+            "wording instead of generic AI viral templates. " +
             "Preserve any good caption rather than rewriting for its own sake. " +
             "Do not merely restate the author's note. No generic AI slogans, " +
             "no hashtags, and no unsupported claims. " +
@@ -570,6 +575,8 @@ final class GeminiClient {
                 .put("observed_ending", result.observedEnding)
                 .put("story_arc", result.storyArc)
                 .put("central_theme", result.centralTheme)
+                .put("editorial_focus", result.editorialFocus)
+                .put("editorial_tone", result.editorialTone)
                 .put("creator_note_original", creatorNote)
                 .put("creator_note_interpretation",
                         creatorBrief == null ? new JSONObject() : creatorBrief);
@@ -585,6 +592,9 @@ final class GeminiClient {
                 "If source video is ambiguous and creator supplied an outcome, use their " +
                 "description without claiming it is visually proven. If there is no creator note, " +
                 "infer the relevant joke/emotion from the clip analysis only. " +
+                "Use the scene's chosen creative direction rather than five preset styles. " +
+                "A memorable authentic hook, tiny contrast or precise emotional truth " +
+                "can stop a scroll better than generic marketing hype. Keep the best first. " +
                 "Avoid repeating the same angle five times; make them natural, concise and " +
                 "specific, with dry humor or quiet emotion as appropriate. " +
                 "NO Dutch, NO boilerplate hype, NO hashtags. " +
@@ -619,10 +629,13 @@ final class GeminiClient {
         String prompt = "You are a native English TikTok caption editor. Rewrite the following five captions " +
                 "in short, distinctive, natural ENGLISH ONLY. No Dutch words. Keep the actual facts intact; " +
                 "make the humor understated and unexpected when appropriate, heartfelt scenes restrained. " +
-                "Keep five distinct one-liners in the creator's dry, nuanced voice, not generic AI hype. " +
+                "Match the tone that THIS scene deserves, rather than a fixed comedy or " +
+                "sadness template. Write sharp human English with no clickbait or AI hype. " +
                 "Return JSON with only a 'captions' array of exactly five {style,text} objects. " +
                 "Original captions: " + originals +
-                " Actual game: " + result.game + ". Actual video: " + result.scene;
+                " Actual game: " + result.game + ". Actual video: " + result.scene +
+                ". Selected creative focus: " + result.editorialFocus +
+                ". Selected tone: " + result.editorialTone;
         JSONObject body = new JSONObject()
                 .put("contents", new JSONArray().put(new JSONObject().put("parts",
                         new JSONArray().put(new JSONObject().put("text", prompt)))))
