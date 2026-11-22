@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.7** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.8** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,19 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.7
+## Wat nieuw is in 1.8
+
+- **Scènegestuurde creatieve keuze:** eerst het hele fragment begrijpen, dan de juiste toon kiezen, vervolgens vijf sterke captions schrijven en de feitelijke afloop controleren.
+- **Geen vast lijstje van vijf stijlen:** de AI kiest een passende, natuurlijke toon in plaats van verplicht een grappige, emotionele, filmische en virale caption te leveren.
+- **Minder AI-achtige teksten:** eigenzinnig, vlot en menselijk Engels; droog wanneer het grappig is, uitgesproken wanneer het verdient, ingetogen wanneer het raakt.
+- **Meer kans op aandacht zonder clickbait:** een eerlijke hook uit de beelden, het geluid, een verrassing, de emotie of een onverwacht contrast; geen verzonnen situaties of claims over viraliteit.
+- **Sterkste caption eerst**, met vier hoogwaardige alternatieven. De app geeft de gekozen creatieve richting in het uitklapbare analyseblok weer.
+- **Zelfde stijl in herstel- en verificatiestappen:** die mogen de oorspronkelijke scènegebonden toon niet vervangen door een sjabloon.
+- **Geen extra API-verzoek:** de toonkeuze en vijf captions komen uit dezelfde Gemini-generatieaanvraag.
+
+De APK-build controleert technisch de code. De kwaliteit van Gemini-uitvoer en de kans op bereik zijn niet gegarandeerd.
+
+## Eerdere verbeteringen in 1.7
 
 - **Vaste bestandsnaamconventie:** `GametitelZonderSpaties_omschrijving.mp4`. Alleen het deel vóór de **eerste underscore** is een extra, automatisch gevonden hint voor de gametitel.
 - **De tekst na de eerste underscore wordt volledig genegeerd voor alle AI-aanvragen.** Het is uitsluitend een organisatorische bestandsaanduiding en zegt niets over wat de video moet betekenen of welke caption de app hoort te maken. Bijvoorbeeld: `ResonanceAPlagueTaleLegacy_mercy.mp4` levert enkel `ResonanceAPlagueTaleLegacy` als hint aan de gamedetector; het woord na de underscore wordt nergens meegestuurd.
