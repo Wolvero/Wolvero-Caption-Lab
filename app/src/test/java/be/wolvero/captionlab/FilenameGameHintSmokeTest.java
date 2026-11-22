@@ -21,6 +21,22 @@ public final class FilenameGameHintSmokeTest {
                 "folder path");
         equals("", FilenameGameHint.extract("<instruction>_notes.mp4"),
                 "malformed input");
-        System.out.println("Filename parser checks passed (game prefix only).");
+        equals("Resonance A Plague Tale Legacy",
+                FilenameGameHint.displayTitle("ResonanceAPlagueTaleLegacy"),
+                "human-readable creator title");
+        equals("GTAVI", FilenameGameHint.displayTitle("GTAVI"), "don't invent a title");
+        equals("Grounded 2", FilenameGameHint.displayTitle("Grounded2"), "number boundary");
+        equals("Resonance A Plague Tale Legacy", FilenameGameHint.chooseTitle(
+                "", FilenameGameHint.extract("ResonanceAPlagueTaleLegacy_mercy.mp4"),
+                "A Plague Tale: Requiem"), "filename beats a conflicting AI game");
+        equals("My Exact Game Title", FilenameGameHint.chooseTitle(
+                "My Exact Game Title", "ResonanceAPlagueTaleLegacy", "A Plague Tale: Requiem"),
+                "explicit field takes priority");
+        equals("AI Guess", FilenameGameHint.chooseTitle("", "", "AI Guess"),
+                "AI fallback when no title is available");
+        equals("Resonance A Plague Tale Legacy", FilenameGameHint.chooseTitle(
+                "", "ResonanceAPlagueTaleLegacy", "Unknown"),
+                "low confidence AI doesn't overwrite filename");
+        System.out.println("Filename prefix priority checks passed. Description suffix ignored.");
     }
 }

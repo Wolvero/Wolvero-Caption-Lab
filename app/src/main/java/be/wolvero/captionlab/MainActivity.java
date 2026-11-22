@@ -712,7 +712,9 @@ public final class MainActivity extends Activity {
         addText(detailContent, "GAME", 11, PURPLE, true, 18);
         addText(detailContent, data.game, 18, WHITE, true, 7);
         if ("provided".equals(data.confidence)) {
-            addText(detailContent, "Door jou opgegeven", 12, GOOD, false, 6);
+            addText(detailContent, "Gametitel door jou ingevuld", 12, GOOD, false, 6);
+        } else if ("filename".equals(data.confidence)) {
+            addText(detailContent, "Gametitel uit bestandsnaam", 12, GOOD, false, 6);
         } else {
             addText(detailContent, "Herkenning: " + translateConfidence(data.confidence),
                     12, MUTED, false, 6);

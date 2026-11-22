@@ -19,5 +19,26 @@ final class FilenameGameHint {
         return prefix;
     }
 
+    /**
+     * Render a human-readable title from the creator's fixed filename game token.
+     * Preserve acronyms/unknown names rather than guessing franchise or title.
+     */
+    static String displayTitle(String prefix) {
+        if (prefix == null || prefix.isEmpty()) return "";
+        return prefix.replaceAll("(?<=[a-z])(?=[A-Z])", " ")
+                .replaceAll("(?<=[A-Za-z])(?=[0-9])", " ")
+                .trim();
+    }
+
+    /**
+     * Explicit user-entered title > creator's filename convention > model guess.
+     * The file's organizational suffix is never passed into these decisions.
+     */
+    static String chooseTitle(String typed, String prefix, String aiGuess) {
+        if (typed != null && !typed.trim().isEmpty()) return typed.trim();
+        if (prefix != null && !prefix.trim().isEmpty()) return displayTitle(prefix.trim());
+        return aiGuess == null ? "" : aiGuess.trim();
+    }
+
     private FilenameGameHint() {}
 }

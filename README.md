@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.8** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.9** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,18 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.8
+## Wat nieuw is in 1.9
+
+- **Gametitel uit de bestandsnaam is niet langer optioneel voor de AI.** Bij de bevestigde gebruikersconventie `GameTitleWithoutSpaces_organisatie.mp4` is de prefix de gekozen game. De AI kan die niet vervangen door een vergelijkbare titel in dezelfde franchise. Het handmatig ingevulde gameveld krijgt nog steeds voorrang.
+- **Bewijsbronnen strikt gescheiden:** de gameprefix is uitsluitend voor de game-identiteit. De rest van de bestandsnaam wordt nooit als creatieve of inhoudelijke context doorgegeven. Beelden en geluid blijven bepalend voor de gebeurtenissen, dialogen en afloop.
+- **Leesbare titel:** CamelCase in een prefix wordt veilig met spaties weergegeven (`ResonanceAPlagueTaleLegacy` wordt `Resonance A Plague Tale Legacy`). Onbekende acroniemen worden niet op goed geluk omgezet in een canonieke naam.
+- **Webcontrole mag de gametitel niet overschrijven.** Ook zoekt Tavily bij een door de gebruiker geselecteerde titel expliciet binnen die game in plaats van een mogelijk foutieve AI-zoekvraag over te nemen.
+- **Voorzichtiger scèneanalyse:** een getrokken mes bewijst niet automatisch een voltooide steek; zonder duidelijk bewijs worden namen van personages en de afloop niet uit franchisekennis verzonnen.
+- De uitgebreide parser-smoketest controleert automatisch de titelprioriteit, inclusief precies het geval waarin het model ten onrechte `A Plague Tale: Requiem` kiest.
+
+De titelprioriteit is technisch getest, maar de inhoudelijke nauwkeurigheid van de videoanalyse moet met echte clips beoordeeld worden.
+
+## Eerdere verbeteringen in 1.8
 
 - **Scènegestuurde creatieve keuze:** eerst het hele fragment begrijpen, dan de juiste toon kiezen, vervolgens vijf sterke captions schrijven en de feitelijke afloop controleren.
 - **Geen vast lijstje van vijf stijlen:** de AI kiest een passende, natuurlijke toon in plaats van verplicht een grappige, emotionele, filmische en virale caption te leveren.
