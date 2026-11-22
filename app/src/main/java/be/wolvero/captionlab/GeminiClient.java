@@ -180,6 +180,14 @@ final class GeminiClient {
                     }
                 }
             }
+            if (result.captions.size() < 5) {
+                // Last repair is deliberately based on the same analyzed video.
+                status.update("Laatste captions aanvullen …");
+                try {
+                    Response completed = completeCaptions(result, creatorNote, creatorBrief, key);
+                    setCaptions(result, completed.text);
+                } catch (Exception ignored) { /* show a smaller valid set rather than crash */ }
+            }
             if (result.captions.isEmpty())
                 throw new IOException("Geen bruikbare captions ontvangen. Probeer opnieuw.");
             if (hasDutchCaptions(result) || hasGameVersionConflict(result))
