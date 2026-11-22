@@ -60,6 +60,7 @@ public final class MainActivity extends Activity {
     private View setupNotice;
     private ProgressBar progressBar;
     private Button analyzeButton;
+    private EditText gameInput, creatorNoteInput;
     private ImageView previewImage;
     private ScrollView scroll;
 
@@ -245,6 +246,40 @@ public final class MainActivity extends Activity {
         addSpacer(hero, 15);
         Button choose = action("＋  Selecteer video", false, v -> pickVideo());
         hero.addView(choose, lp(-1, 50));
+
+        addSpacer(content, 15);
+        LinearLayout guidance = card();
+        content.addView(guidance, lp(-1, -2));
+        addText(guidance, "GIVE IT A HEAD START", 11, PURPLE, true, 0);
+        addText(guidance, "Welke game?", 17, WHITE, true, 11);
+        addText(guidance, "Laat leeg als je de game automatisch wilt laten herkennen.", 12, MUTED, false, 7);
+        gameInput = new EditText(this);
+        gameInput.setSingleLine(true);
+        gameInput.setTextColor(WHITE);
+        gameInput.setHintTextColor(MUTED);
+        gameInput.setTextSize(15);
+        gameInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        gameInput.setHint("Bijv. Grounded 2, Helldivers 2 …");
+        gameInput.setBackground(shape(INNER, 12, STROKE));
+        gameInput.setPadding(dp(14), dp(11), dp(14), dp(11));
+        LinearLayout.LayoutParams glp = lp(-1, 52);
+        glp.topMargin = dp(12);
+        guidance.addView(gameInput, glp);
+
+        addText(guidance, "Het verhaal achter de clip", 16, WHITE, true, 20);
+        addText(guidance, "Optioneel. Eén zinnetje helpt de AI om jouw grap of gevoel te begrijpen.", 12, MUTED, false, 7);
+        creatorNoteInput = new EditText(this);
+        creatorNoteInput.setTextColor(WHITE);
+        creatorNoteInput.setHintTextColor(MUTED);
+        creatorNoteInput.setTextSize(14);
+        creatorNoteInput.setGravity(Gravity.TOP | Gravity.START);
+        creatorNoteInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        creatorNoteInput.setHint("Bijv. ik doe alsof ik die enorme slang niet herken …");
+        creatorNoteInput.setBackground(shape(INNER, 12, STROKE));
+        creatorNoteInput.setPadding(dp(14), dp(13), dp(14), dp(13));
+        LinearLayout.LayoutParams clp = lp(-1, 95);
+        clp.topMargin = dp(12);
+        guidance.addView(creatorNoteInput, clp);
 
         addSpacer(content, 15);
         analyzeButton = action("✨  CREATE MY CAPTIONS   →", true, v -> beginAnalysis());
