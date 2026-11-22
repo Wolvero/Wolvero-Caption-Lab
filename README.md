@@ -1,6 +1,6 @@
 # Wolvero Caption Lab · Android
 
-**Wolvero Caption Lab 1.2** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Wolvero Caption Lab 1.3** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -20,7 +20,17 @@ De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan 
 
 De gebruiker heeft zelf reeds de sleutels gemaakt en hoeft die niet opnieuw aan te vragen.
 
-## Wat nieuw is in 1.2
+## Wat nieuw is in 1.3
+
+- **Herkenning per spelversie:** Gemini moet specifieke aanwijzingen zoeken (personages, locaties, UI). De app controleert versiespecifieke inconsistenties, bijvoorbeeld GTA V versus de GTA VI-locatie Leonida of het duo Jason/Lucia.
+- **Extra online controle van de game**, niet enkel hoofdstukken: Tavily-zoekresultaten worden voorzichtig getoetst aan wat de AI echt in de video zag. Een correctie gebeurt enkel bij voldoende expliciete ondersteuning.
+- **Betere sceneanalyse** met aparte zichtbare momenten, geluidsaanwijzingen en de emotionele of komische verhaallijn. Dit gaat vervolgens naar een zelfstandige Engelstalige caption-editor.
+- **Vijf verschillende creatieve ideeën**, niet vijf variaties op dezelfde grap. De prompt vermijdt generieke captionformules en verzonnen politieachtervolgingen of gestolen auto's wanneer die niet in de video voorkomen.
+- **Eenmalige schrijfinstructie zonder extra invoer**: het verhaalveld blijft volledig optioneel en standaard verborgen.
+
+Dit is een code- en buildverbetering. De resultaten van een echte GTA VI-video moeten nog op het toestel worden beoordeeld.
+
+## Vorige verbeteringen in 1.2
 
 - **Video-first:** enkel een clip kiezen en op Create my captions drukken volstaat. De app analyseert zelfstandig het beeld en het geluid.
 - De gametitel blijft een **vrijblijvende correctie** als automatische herkenning faalt.
