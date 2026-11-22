@@ -20,8 +20,28 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - name: Install Android SDK 35
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Ensure Android SDK 35
+        shell: bash
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "Android SDK root: $SDK_ROOT"
+          if [ ! -d "$SDK_ROOT/platforms/android-35" ] || [ ! -d "$SDK_ROOT/build-tools/35.0.0" ]; then
+            CMDLINE_ROOT="$SDK_ROOT/cmdline-tools"
+            if [ ! -d "$CMDLINE_ROOT" ]; then
+              echo "Android command-line tools are missing: $CMDLINE_ROOT"
+              exit 1
+            fi
+            SDKMANAGER="$(find "$CMDLINE_ROOT" -type f -name sdkmanager | sort -V | tail -n 1)"
+            if [ -z "$SDKMANAGER" ]; then
+              echo "Unable to locate sdkmanager within Android SDK"
+              exit 1
+            fi
+            echo "Using $SDKMANAGER"
+            "$SDKMANAGER" --licenses < /dev/null || true
+            "$SDKMANAGER" 'platforms;android-35' 'build-tools;35.0.0'
+          else
+            echo "Android 35 and build tools already installed"
+          fi
       - name: Build installable APK
         run: gradle --no-daemon assembleDebug
       - name: Upload APK
