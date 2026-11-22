@@ -56,7 +56,8 @@ public final class MainActivity extends Activity {
     private boolean working;
 
     private LinearLayout content, results, previewBox;
-    private TextView videoName, sizeLabel, progressLabel, keyState, tavilyState;
+    private TextView videoName, sizeLabel, progressLabel, keyState, tavilyState, connectionLabel;
+    private View setupNotice;
     private ProgressBar progressBar;
     private Button analyzeButton;
     private ImageView previewImage;
@@ -134,6 +135,19 @@ public final class MainActivity extends Activity {
         parent.addView(v, lp(1, size));
     }
 
+    private GradientDrawable gradient(int from, int to, int radius) {
+        GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
+                new int[]{from, to});
+        d.setCornerRadius(dp(radius));
+        return d;
+    }
+    private TextView chip(String title) {
+        TextView t = text(title, 10, MUTED, true);
+        t.setGravity(Gravity.CENTER);
+        t.setBackground(shape(INNER, 11, STROKE));
+        t.setPadding(dp(11), dp(9), dp(11), dp(9));
+        return t;
+    }
     private void buildScreen() {
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -144,109 +158,156 @@ public final class MainActivity extends Activity {
             return insets;
         });
         content = vertical();
-        content.setPadding(dp(20), dp(26), dp(20), dp(36));
+        content.setPadding(dp(20), dp(25), dp(20), dp(42));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         setContentView(scroll);
 
-        LinearLayout banner = horizontal();
-        TextView mark = text("W/", 25, PURPLE, true);
-        banner.addView(mark, lp(46, -2));
-        LinearLayout brand = vertical();
-        brand.addView(text("WOLVERO", 17, WHITE, true), lp(-1, -2));
-        TextView sub = text("C A P T I O N   L A B", 9, MUTED, true);
-        LinearLayout.LayoutParams subp = lp(-1, -2);
-        subp.topMargin = dp(3);
-        brand.addView(sub, subp);
-        banner.addView(brand, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView version = text("BETA 01", 10, GOOD, true);
-        version.setBackground(shape(INNER, 8, STROKE));
-        pad(version, 10, 8);
-        banner.addView(version, lp(-2, -2));
-        content.addView(banner, lp(-1, -2));
+        LinearLayout header = horizontal();
+        TextView logo = text("W/", 27, Color.WHITE, true);
+        logo.setGravity(Gravity.CENTER);
+        logo.setBackground(gradient(Color.rgb(146, 97, 250), Color.rgb(89, 72, 195), 15));
+        header.addView(logo, lp(54, 54));
+        LinearLayout wordmark = vertical();
+        LinearLayout.LayoutParams wm = new LinearLayout.LayoutParams(0, -2, 1);
+        wm.leftMargin = dp(13);
+        wordmark.addView(text("WOLVERO", 18, WHITE, true));
+        TextView subtitle = text("C A P T I O N  L A B", 9, MUTED, true);
+        LinearLayout.LayoutParams su = lp(-1, -2);
+        su.topMargin = dp(4);
+        wordmark.addView(subtitle, su);
+        header.addView(wordmark, wm);
+        Button gear = action("⚙", false, v -> showSetupDialog());
+        gear.setContentDescription("Instellingen en API-sleutels");
+        gear.setTextSize(23);
+        gear.setPadding(0, 0, 0, 0);
+        header.addView(gear, lp(50, 50));
+        content.addView(header, lp(-1, -2));
 
-        addText(content, "From gameplay to\ngreat captions.", 29, WHITE, true, 35);
-        addText(content, "Upload een clip. De app bekijkt het spel, luistert naar het geluid en schrijft vijf Engelstalige TikTok-captions.", 14, MUTED, false, 13);
-        addSpacer(content, 25);
+        addSpacer(content, 31);
+        TextView eyebrow = text("YOUR GAMEPLAY. YOUR STORY.", 11, GOOD, true);
+        content.addView(eyebrow, lp(-1, -2));
+        addText(content, "Every great clip\nhas a story.", 33, WHITE, true, 11);
+        addText(content, "Upload je gameplay. Wij halen het moment eruit en schrijven vijf captions die écht bij je clip passen.", 14, MUTED, false, 11);
+        addSpacer(content, 19);
 
-        LinearLayout uploadCard = card();
-        content.addView(uploadCard, lp(-1, -2));
-        addText(uploadCard, "01   JOUW VIDEO", 12, PURPLE, true, 0);
-        addText(uploadCard, "Welk moment gaan we captionen?", 16, WHITE, true, 12);
+        LinearLayout tags = horizontal();
+        TextView a = chip("◉  VIDEO + AUDIO");
+        TextView b = chip("⌕  GAME RESEARCH");
+        LinearLayout.LayoutParams tag1 = new LinearLayout.LayoutParams(0, -2, 1f);
+        tag1.rightMargin = dp(9);
+        tags.addView(a, tag1);
+        tags.addView(b, new LinearLayout.LayoutParams(0, -2, 1f));
+        content.addView(tags, lp(-1, -2));
+        addSpacer(content, 21);
+
+        LinearLayout hero = vertical();
+        hero.setBackground(gradient(Color.rgb(38, 31, 72), Color.rgb(19, 26, 41), 23));
+        hero.setPadding(dp(19), dp(21), dp(19), dp(21));
+        content.addView(hero, lp(-1, -2));
+        LinearLayout uploadTitle = horizontal();
+        TextView upIcon = text("↥", 31, PURPLE, true);
+        upIcon.setGravity(Gravity.CENTER);
+        upIcon.setBackground(shape(Color.rgb(53, 44, 93), 16, Color.rgb(83, 65, 132)));
+        uploadTitle.addView(upIcon, lp(53, 53));
+        LinearLayout uploadWords = vertical();
+        LinearLayout.LayoutParams uw = new LinearLayout.LayoutParams(0, -2, 1);
+        uw.leftMargin = dp(13);
+        uploadWords.addView(text("YOUR NEXT MOMENT", 11, PURPLE, true));
+        TextView upl = text("Drop your clip in.", 19, WHITE, true);
+        LinearLayout.LayoutParams ut = lp(-1, -2);
+        ut.topMargin = dp(4);
+        uploadWords.addView(upl, ut);
+        uploadTitle.addView(uploadWords, uw);
+        hero.addView(uploadTitle, lp(-1, -2));
 
         previewBox = vertical();
         previewBox.setGravity(Gravity.CENTER);
-        previewBox.setBackground(shape(INNER, 14, STROKE));
+        previewBox.setBackground(shape(Color.rgb(21, 24, 41), 16, Color.rgb(85, 69, 127)));
         LinearLayout.LayoutParams pp = lp(-1, -2);
-        pp.topMargin = dp(16);
-        uploadCard.addView(previewBox, pp);
-        pad(previewBox, 13, 15);
+        pp.topMargin = dp(21);
+        hero.addView(previewBox, pp);
+        pad(previewBox, 12, 17);
         previewImage = new ImageView(this);
         previewImage.setAdjustViewBounds(true);
         previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
         previewImage.setVisibility(View.GONE);
         previewBox.addView(previewImage, lp(-1, 170));
-        videoName = text("Geen video geselecteerd", 14, WHITE, true);
+        videoName = text("Your next great clip starts here", 14, WHITE, true);
         videoName.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams nameLp = lp(-1, -2);
         nameLp.topMargin = dp(10);
         previewBox.addView(videoName, nameLp);
-        sizeLabel = text("MP4 of andere ondersteunde video · max. 80 MB", 12, MUTED, false);
+        sizeLabel = text("MP4, MOV of WebM  •  tot 80 MB", 12, MUTED, false);
         sizeLabel.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams sizeLp = lp(-1, -2);
         sizeLp.topMargin = dp(7);
         previewBox.addView(sizeLabel, sizeLp);
-        addSpacer(uploadCard, 14);
-        Button choose = action("＋  Kies video uit galerij", false, v -> pickVideo());
-        uploadCard.addView(choose, lp(-1, 50));
+        addSpacer(hero, 15);
+        Button choose = action("＋  Selecteer video", false, v -> pickVideo());
+        hero.addView(choose, lp(-1, 50));
 
-        addSpacer(content, 14);
-        LinearLayout settings = card();
-        content.addView(settings, lp(-1, -2));
-        addText(settings, "02   GRATIS AI-VERBINDING", 12, PURPLE, true, 0);
-        addText(settings, "Jouw eigen Gemini API-sleutel", 16, WHITE, true, 11);
-        keyState = text("Nog niet ingesteld", 12, MUTED, false);
-        LinearLayout.LayoutParams kp = lp(-1, -2);
-        kp.topMargin = dp(8);
-        settings.addView(keyState, kp);
-        addSpacer(settings, 13);
-        settings.addView(action("🔑  API-sleutel instellen", false, v -> showKeyDialog()), lp(-1, 48));
-        addText(settings, "Gebruik een gratis project zonder billing. De sleutel wordt versleuteld op je telefoon bewaard.", 11, MUTED, false, 12);
-        addSpacer(settings, 20);
-        addText(settings, "GRATIS ONLINE ZOEKFUNCTIE", 12, PURPLE, true, 0);
-        addText(settings, "Tavily · 1.000 zoekcredits per maand", 14, WHITE, true, 9);
-        tavilyState = text("Optioneel, voor blijvende verificatie van games en hoofdstukken", 12, MUTED, false);
-        LinearLayout.LayoutParams tavp = lp(-1, -2);
-        tavp.topMargin = dp(7);
-        settings.addView(tavilyState, tavp);
-        addSpacer(settings, 13);
-        settings.addView(action("🌐  Gratis zoek-sleutel instellen", false, v -> showTavilyDialog()), lp(-1, 48));
-        addText(settings, "Gratis Tavily Researcher-account, zonder kredietkaart of betaalplan. Eén zoekopdracht per video.", 11, MUTED, false, 12);
-        addSpacer(content, 14);
-
-        analyzeButton = action("ANALYSEER VIDEO   →", true, v -> beginAnalysis());
-        content.addView(analyzeButton, lp(-1, 58));
+        addSpacer(content, 15);
+        analyzeButton = action("✨  CREATE MY CAPTIONS   →", true, v -> beginAnalysis());
+        analyzeButton.setTextSize(15);
+        analyzeButton.setBackground(gradient(Color.rgb(198, 172, 253), Color.rgb(154, 119, 233), 16));
+        content.addView(analyzeButton, lp(-1, 59));
         setButtonReady();
-        addText(content, "Geen abonnement. De gratis API heeft wel gebruikslimieten. Je video wordt voor analyse naar Google verstuurd.", 11, MUTED, false, 12);
+        addSpacer(content, 15);
+
+        LinearLayout statusRow = horizontal();
+        TextView dot = text("●", 12, GOOD, true);
+        statusRow.addView(dot, lp(17, -2));
+        connectionLabel = text("AI-verbinding instellen", 12, MUTED, false);
+        statusRow.addView(connectionLabel, new LinearLayout.LayoutParams(0, -2, 1f));
+        content.addView(statusRow, lp(-1, -2));
+
+        setupNotice = card();
+        LinearLayout notice = (LinearLayout) setupNotice;
+        LinearLayout.LayoutParams np = lp(-1, -2);
+        np.topMargin = dp(15);
+        content.addView(notice, np);
+        addText(notice, "KLAAR VOOR JE EERSTE CLIP?", 11, PURPLE, true, 0);
+        addText(notice, "Verbind eenmalig je gratis Gemini- en Tavily-sleutels. Daarna kun je rechtstreeks aan de slag.", 13, WHITE, false, 9);
+        addSpacer(notice, 13);
+        notice.addView(action("Sleutels instellen  →", false, v -> showSetupDialog()), lp(-1, 49));
 
         progressBar = new ProgressBar(this);
+        progressBar.setIndeterminateTintList(ColorStateList.valueOf(PURPLE));
         progressBar.setIndeterminate(true);
         progressBar.setVisibility(View.GONE);
-        LinearLayout.LayoutParams barp = lp(40, 40);
+        LinearLayout.LayoutParams barp = lp(44, 44);
         barp.gravity = Gravity.CENTER_HORIZONTAL;
-        barp.topMargin = dp(23);
+        barp.topMargin = dp(20);
         content.addView(progressBar, barp);
         progressLabel = text("", 13, PURPLE, true);
         progressLabel.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams statp = lp(-1, -2);
-        statp.topMargin = dp(10);
+        statp.topMargin = dp(11);
         content.addView(progressLabel, statp);
 
         results = vertical();
         LinearLayout.LayoutParams rp = lp(-1, -2);
         rp.topMargin = dp(8);
         content.addView(results, rp);
+
+        keyState = text("", 12, MUTED, false);
+        tavilyState = text("", 12, MUTED, false);
         refreshKeyState();
         refreshTavilyState();
+
+        LinearLayout footer = vertical();
+        LinearLayout.LayoutParams fp = lp(-1, -2);
+        fp.topMargin = dp(35);
+        footer.setGravity(Gravity.CENTER);
+        footer.addView(text("MADE FOR THE MOMENTS WORTH SHARING", 10, MUTED, true));
+        TextView foot = text("WOLVEROGAMING  •  NO SUBSCRIPTION", 9, PURPLE, true);
+        LinearLayout.LayoutParams footp = lp(-2, -2);
+        footp.topMargin = dp(7);
+        footer.addView(foot, footp);
+        content.addView(footer, fp);
+        if (setupNotice.getVisibility() == View.VISIBLE) {
+            scroll.post(this::showSetupDialog);
+        }
     }
 
     private void setButtonReady() {
@@ -256,91 +317,104 @@ public final class MainActivity extends Activity {
         analyzeButton.setAlpha(ready ? 1f : 0.48f);
     }
     private void refreshKeyState() {
-        try {
-            String key = SecureKeys.load(this);
-            keyState.setText(key.isEmpty() ? "Nog niet ingesteld · gratis key nodig" : "✓  Sleutel veilig opgeslagen op dit toestel");
-            keyState.setTextColor(key.isEmpty() ? MUTED : GOOD);
-        } catch (Exception e) {
-            keyState.setText("Sleutel niet toegankelijk · stel opnieuw in");
-            keyState.setTextColor(MUTED);
-        }
-    }
-    private void showKeyDialog() {
-        EditText input = new EditText(this);
-        input.setSingleLine(true);
-        input.setTextColor(Color.BLACK);
-        input.setHint("AIza...");
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        int pad = dp(20);
-        LinearLayout holder = vertical();
-        holder.setPadding(pad, 0, pad, 0);
-        holder.addView(input, lp(-1, -2));
-        new AlertDialog.Builder(this)
-                .setTitle("Gratis Gemini API-sleutel")
-                .setMessage("Maak een gratis API-sleutel op aistudio.google.com/api-keys. Kies geen betaald project. Plak je sleutel hieronder. Deel hem niet via TikTok of GitHub.")
-                .setView(holder)
-                .setNegativeButton("Annuleren", null)
-                .setNeutralButton("Open AI Studio", (d,w) -> {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://aistudio.google.com/api-keys")));
-                })
-                .setPositiveButton("Bewaar lokaal", (d,w) -> {
-                    String key = input.getText().toString().trim();
-                    if (key.length() < 12 || key.contains(" ")) {
-                        Toast.makeText(this, "Controleer de API-sleutel.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    try {
-                        SecureKeys.save(this, key);
-                        refreshKeyState();
-                        Toast.makeText(this, "API-sleutel versleuteld opgeslagen.", Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Kon sleutel niet bewaren: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                })
-                .show();
+        refreshSetupStatus();
     }
     private void refreshTavilyState() {
-        try {
-            boolean configured = !SecureKeys.loadTavily(this).isEmpty();
-            tavilyState.setText(configured ? "✓  Zoeken in spelwiki's staat aan" :
-                    "Niet ingesteld · optioneel voor automatische webcontrole");
-            tavilyState.setTextColor(configured ? GOOD : MUTED);
-        } catch (Exception ignored) {
-            tavilyState.setText("Sleutel niet toegankelijk · stel opnieuw in");
-            tavilyState.setTextColor(MUTED);
+        refreshSetupStatus();
+    }
+    private void refreshSetupStatus() {
+        if (connectionLabel == null || setupNotice == null) return;
+        boolean gemini = false, tavily = false;
+        try { gemini = !SecureKeys.load(this).isEmpty(); } catch (Exception ignored) { }
+        try { tavily = !SecureKeys.loadTavily(this).isEmpty(); } catch (Exception ignored) { }
+        if (gemini && tavily) {
+            connectionLabel.setText("AI ready  •  automatische game- en scènecontrole");
+            connectionLabel.setTextColor(GOOD);
+            setupNotice.setVisibility(View.GONE);
+        } else if (gemini) {
+            connectionLabel.setText("Gemini verbonden  •  online broncontrole nog instellen");
+            connectionLabel.setTextColor(MUTED);
+            setupNotice.setVisibility(View.VISIBLE);
+        } else {
+            connectionLabel.setText("Eenmalige configuratie nodig");
+            connectionLabel.setTextColor(MUTED);
+            setupNotice.setVisibility(View.VISIBLE);
         }
     }
-    private void showTavilyDialog() {
+    private EditText secretField(String hint) {
         EditText input = new EditText(this);
         input.setSingleLine(true);
-        input.setTextColor(Color.BLACK);
-        input.setHint("tvly-...");
+        input.setTextSize(14);
+        input.setTextColor(WHITE);
+        input.setHintTextColor(MUTED);
+        input.setHint(hint);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        LinearLayout holder = vertical();
-        holder.setPadding(dp(20), 0, dp(20), 0);
-        holder.addView(input, lp(-1, -2));
-        new AlertDialog.Builder(this)
-                .setTitle("Gratis webverificatie")
-                .setMessage("Vraag een gratis Tavily API-sleutel aan. Het Researcher-plan geeft maandelijks 1.000 zoekcredits zonder kredietkaart. We gebruiken één basiszoekopdracht per video. Geen betaalplan inschakelen.")
-                .setView(holder)
-                .setNegativeButton("Annuleren", null)
-                .setNeutralButton("Open Tavily", (d,w) -> startActivity(new Intent(Intent.ACTION_VIEW,
-                        Uri.parse("https://app.tavily.com"))))
-                .setPositiveButton("Bewaar lokaal", (d,w) -> {
-                    String key = input.getText().toString().trim();
-                    if (!key.startsWith("tvly-") || key.length() < 15) {
-                        Toast.makeText(this, "Controleer de Tavily API-sleutel.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    try {
-                        SecureKeys.saveTavily(this, key);
-                        refreshTavilyState();
-                        Toast.makeText(this, "Gratis zoekverbinding ingesteld.", Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        Toast.makeText(this, "Kon sleutel niet bewaren.", Toast.LENGTH_LONG).show();
-                    }
-                }).show();
+        input.setBackground(shape(INNER, 12, STROKE));
+        input.setPadding(dp(14), dp(11), dp(14), dp(11));
+        return input;
     }
+    private void showSetupDialog() {
+        LinearLayout layout = vertical();
+        layout.setPadding(dp(21), dp(13), dp(21), dp(6));
+        TextView heading = text("One-time setup.", 24, WHITE, true);
+        layout.addView(heading, lp(-1, -2));
+        TextView help = text("Plak hieronder je twee sleutels. Ze blijven versleuteld op je telefoon en worden nooit aan GitHub toegevoegd.", 13, MUTED, false);
+        LinearLayout.LayoutParams hp = lp(-1, -2);
+        hp.topMargin = dp(8);
+        layout.addView(help, hp);
+
+        addText(layout, "GEMINI  •  VIDEO + CAPTIONS", 11, PURPLE, true, 22);
+        EditText geminiInput = secretField("AIza...");
+        LinearLayout.LayoutParams gi = lp(-1, 49);
+        gi.topMargin = dp(9);
+        layout.addView(geminiInput, gi);
+        addText(layout, "TAVILY  •  ONLINE GAME RESEARCH", 11, PURPLE, true, 20);
+        EditText tavilyInput = secretField("tvly-...");
+        LinearLayout.LayoutParams ti = lp(-1, 49);
+        ti.topMargin = dp(9);
+        layout.addView(tavilyInput, ti);
+
+        addText(layout, "Al ingesteld? Laat een veld leeg om de bewaarde sleutel te behouden.", 11, MUTED, false, 14);
+        addText(layout, "Gebruik uitsluitend gratis API-projecten zonder billing. Video's worden voor de analyse met Google gedeeld.", 11, MUTED, false, 12);
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(layout)
+                .setNegativeButton("Annuleren", null)
+                .setPositiveButton("Bewaar & start", null)
+                .create();
+        dialog.setOnShowListener(ignored -> {
+            if (dialog.getWindow() != null)
+                dialog.getWindow().setBackgroundDrawable(shape(CARD, 20, STROKE));
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(PURPLE);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(MUTED);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                String g = geminiInput.getText().toString().trim();
+                String t = tavilyInput.getText().toString().trim();
+                if (!g.isEmpty() && (g.length() < 12 || g.contains(" "))) {
+                    geminiInput.setError("Controleer je Gemini-sleutel."); return;
+                }
+                if (!t.isEmpty() && (!t.startsWith("tvly-") || t.length() < 15)) {
+                    tavilyInput.setError("Controleer je Tavily-sleutel."); return;
+                }
+                try {
+                    if (g.isEmpty() && SecureKeys.load(this).isEmpty()) {
+                        geminiInput.setError("Gemini-sleutel is nodig."); return;
+                    }
+                    if (t.isEmpty() && SecureKeys.loadTavily(this).isEmpty()) {
+                        tavilyInput.setError("Tavily-sleutel is nodig voor online onderzoek."); return;
+                    }
+                    if (!g.isEmpty()) SecureKeys.save(this, g);
+                    if (!t.isEmpty()) SecureKeys.saveTavily(this, t);
+                    refreshSetupStatus();
+                    dialog.dismiss();
+                    Toast.makeText(this, "Alles klaar. Kies je eerste video!", Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(this, "Kon de sleutels niet veilig opslaan.", Toast.LENGTH_LONG).show();
+                }
+            });
+        });
+        dialog.show();
+    }
+    private void showKeyDialog() { showSetupDialog(); }
 
     private void pickVideo() {
         if (working) return;
