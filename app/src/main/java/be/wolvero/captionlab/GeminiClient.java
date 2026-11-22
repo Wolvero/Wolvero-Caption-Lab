@@ -134,27 +134,56 @@ final class GeminiClient {
                 result.creatorInterpretation = creatorBrief.optString("interpretation", "");
                 result.creatorEnding = creatorBrief.optString("ending_outcome", "");
             }
-            status.update("Vijf Engelse captions schrijven …");
-            Response captions = generateCaptions(result, creatorNote, creatorBrief, key);
-            setCaptions(result, captions.text);
+            status.update("Engelse captions samenstellen …");
+            try {
+                Response firstDraft = generateCaptions(result, creatorNote, creatorBrief, key);
+                setCaptions(result, firstDraft.text);
+            } catch (Exception incomplete) {
+                // The model can occasionally return an incomplete/malformed caption array.
+                // Recover using the already processed video, without uploading it again.
+                status.update("Captionantwoord aanvullen …");
+                Response retry = completeCaptions(result, creatorNote, creatorBrief, key);
+                setCaptions(result, retry.text);
+            }
+            if (result.captions.size() < 5) {
+                // Less than five is still useful; request a complete set once, don't fail.
+                status.update("Captionselectie vervolledigen …");
+                try {
+                    Response completed = completeCaptions(result, creatorNote, creatorBrief, key);
+                    setCaptions(result, completed.text);
+                } catch (Exception ignored) { /* show already valid captions */ }
+            }
             if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
                 status.update("Engelse captions verfijnen …");
-                Response corrected = refineCaptionsInEnglish(result, key);
-                setCaptions(result, corrected.text);
-                if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
-                    throw new IOException("De AI heeft de taal of gametitel niet betrouwbaar verwerkt. Probeer opnieuw.");
+                try {
+                    Response corrected = refineCaptionsInEnglish(result, key);
+                    setCaptions(result, corrected.text);
+                } catch (Exception ignored) {
+                    // The user's video doesn't need to be uploaded again for output repair.
                 }
             }
             if (!creatorNote.isEmpty()) {
-                // A separate model call checks semantic consistency with explicit creator facts.
-                // This is a general entailment check, not a word filter for any one theme.
-                status.update("Captions toetsen aan de afloop …");
-                Response audited = auditAndReviseCaptions(result, creatorNote, creatorBrief, key);
-                setCaptions(result, audited.text);
-                if (hasDutchCaptions(result) || hasGameVersionConflict(result)) {
-                    throw new IOException("De captions voldeden niet aan de taal- of gamecontrole.");
+                // Creator context is a semantic check, not a guarantee that the model
+                // can always produce exactly five items on its first response.
+                status.update("Captions toetsen aan jouw toelichting …");
+                try {
+                    Response audited = auditAndReviseCaptions(result, creatorNote, creatorBrief, key);
+                    setCaptions(result, audited.text);
+                } catch (Exception firstAuditFailure) {
+                    status.update("Captioncontrole herstellen …");
+                    try {
+                        Response revised = completeCaptions(result, creatorNote, creatorBrief, key);
+                        setCaptions(result, revised.text);
+                    } catch (Exception retryFailure) {
+                        throw new IOException("De captions zijn gemaakt, maar de betekeniscontrole " +
+                                "kon niet worden afgerond. Probeer opnieuw.", retryFailure);
+                    }
                 }
             }
+            if (result.captions.isEmpty())
+                throw new IOException("Geen bruikbare captions ontvangen. Probeer opnieuw.");
+            if (hasDutchCaptions(result) || hasGameVersionConflict(result))
+                throw new IOException("De captions bevatten nog een taal- of gamefout. Probeer opnieuw.");
             status.update("Klaar! Kies jouw caption.");
             return result;
         } finally {
@@ -466,23 +495,75 @@ final class GeminiClient {
         return generate(VIDEO_MODEL, request, key);
     }
 
+    /**
+     * Accept a valid partial set instead of failing the entire video analysis.
+     * Recovery asks Gemini to complete the set to five. Never display invented
+     * placeholder captions or copy an old clip's text.
+     */
     private static void setCaptions(Result result, String text) throws Exception {
         JSONObject json = extractJson(text);
         JSONArray arr = json.optJSONArray("captions");
-        if (arr == null || arr.length() != 5)
-            throw new IOException("De AI heeft geen vijf captions geleverd. Probeer opnieuw.");
-        List<Caption> out = new ArrayList<>();
+        if (arr == null || arr.length() == 0)
+            throw new IOException("De AI leverde geen bruikbare captions.");
+        List<Caption> valid = new ArrayList<>();
         Set<String> distinct = new HashSet<>();
-        for (int i = 0; i < arr.length(); i++) {
+        for (int i = 0; i < arr.length() && valid.size() < 5; i++) {
             JSONObject item = arr.optJSONObject(i);
-            if (item == null) throw new IOException("Ongeldige caption ontvangen.");
+            if (item == null) continue;
             String caption = item.optString("text", "").trim();
-            if (caption.isEmpty() || !distinct.add(caption.toLowerCase(java.util.Locale.ROOT)))
-                throw new IOException("De captions bevatten lege of dubbele teksten. Probeer opnieuw.");
-            out.add(new Caption(item.optString("style", "Caption " + (i + 1)), caption));
+            if (caption.isEmpty() ||
+                    !distinct.add(caption.toLowerCase(java.util.Locale.ROOT))) continue;
+            String style = item.optString("style", "").trim();
+            if (style.isEmpty()) style = "Caption " + (valid.size() + 1);
+            valid.add(new Caption(style, caption));
         }
+        if (valid.isEmpty()) throw new IOException("De AI leverde geen bruikbare captions.");
+        // Swap atomically; previous valid drafts survive a malformed audit response.
         result.captions.clear();
-        result.captions.addAll(out);
+        result.captions.addAll(valid);
+    }
+
+    private static Response completeCaptions(Result result, String creatorNote,
+                                             JSONObject creatorBrief, String key) throws Exception {
+        JSONArray existing = new JSONArray();
+        for (Caption caption : result.captions) {
+            existing.put(new JSONObject().put("style", caption.style).put("text", caption.text));
+        }
+        JSONObject facts = new JSONObject()
+                .put("game", result.game)
+                .put("scene", result.scene)
+                .put("visual_beats", result.visualBeats)
+                .put("observed_ending", result.observedEnding)
+                .put("story_arc", result.storyArc)
+                .put("central_theme", result.centralTheme)
+                .put("creator_note_original", creatorNote)
+                .put("creator_note_interpretation",
+                        creatorBrief == null ? new JSONObject() : creatorBrief);
+        String prompt = "You are a precise English gaming caption editor. " +
+                "Produce one compact JSON object containing exactly five distinct captions. " +
+                "Shape: {\"captions\":[{\"style\":\"Short label\",\"text\":\"English caption\"}," +
+                "{\"style\":\"Short label\",\"text\":\"English caption\"}," +
+                "{\"style\":\"Short label\",\"text\":\"English caption\"}," +
+                "{\"style\":\"Short label\",\"text\":\"English caption\"}," +
+                "{\"style\":\"Short label\",\"text\":\"English caption\"}]}. " +
+                "Preserve the semantics of all explicit creator statements, including actors, " +
+                "the final outcome and its polarity. Do not invent events or reverse the ending. " +
+                "If source video is ambiguous and creator supplied an outcome, use their " +
+                "description without claiming it is visually proven. If there is no creator note, " +
+                "infer the relevant joke/emotion from the clip analysis only. " +
+                "Avoid repeating the same angle five times; make them natural, concise and " +
+                "specific, with dry humor or quiet emotion as appropriate. " +
+                "NO Dutch, NO boilerplate hype, NO hashtags. " +
+                "EXISTING DRAFTS (reuse good ideas if consistent): " + existing +
+                " VIDEO AND CONTEXT FACTS: " + facts;
+        JSONObject body = new JSONObject()
+                .put("contents", new JSONArray().put(new JSONObject().put("parts",
+                        new JSONArray().put(new JSONObject().put("text", prompt)))))
+                .put("generationConfig", new JSONObject()
+                        .put("responseMimeType", "application/json")
+                        .put("temperature", 0.45)
+                        .put("maxOutputTokens", 1600));
+        return generate(VIDEO_MODEL, body, key);
     }
 
     private static boolean hasDutchCaptions(Result result) {
