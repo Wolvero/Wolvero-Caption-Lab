@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.text.InputType;
+import android.text.InputFilter;
 import android.text.TextUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.view.Gravity;
@@ -513,6 +514,65 @@ public final class MainActivity extends Activity {
     }
     private void showKeyDialog() { showSetupDialog(); }
 
+    private void hideKeyboard() {
+        View focus = getCurrentFocus();
+        if (focus != null) {
+            InputMethodManager keyboard = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (keyboard != null) keyboard.hideSoftInputFromWindow(focus.getWindowToken(), 0);
+            focus.clearFocus();
+        }
+    }
+
+    private void refineResults() {
+        if (working || lastResult == null || revisionInput == null) return;
+        final String instruction = revisionInput.getText().toString().trim();
+        if (instruction.isEmpty()) {
+            Toast.makeText(this, "Vertel wat je anders wilt, bijvoorbeeld: combineer 1 en 3.",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        final String apiKey;
+        try {
+            apiKey = SecureKeys.load(this);
+        } catch (Exception e) {
+            showSetupDialog();
+            return;
+        }
+        if (apiKey.isEmpty()) {
+            showSetupDialog();
+            return;
+        }
+        final GeminiClient.Result current = lastResult;
+        working = true;
+        revisionButton.setEnabled(false);
+        revisionButton.setAlpha(0.5f);
+        revisionStatus.setText("Nieuwe ideeën schrijven, met jouw feedback …");
+        tasks.execute(() -> {
+            try {
+                GeminiClient.Result revised = GeminiClient.refineCaptions(current, instruction, apiKey);
+                runOnUiThread(() -> {
+                    working = false;
+                    hideKeyboard();
+                    setProgress("", false);
+                    showResult(revised);
+                });
+            } catch (Exception error) {
+                runOnUiThread(() -> {
+                    working = false;
+                    revisionButton.setEnabled(true);
+                    revisionButton.setAlpha(1f);
+                    revisionStatus.setText("Je vorige vijf captions zijn bewaard.");
+                    new AlertDialog.Builder(this)
+                            .setTitle("Verfijnen niet gelukt")
+                            .setMessage(error.getMessage() == null
+                                    ? "Probeer nog eens. Je eerdere captions blijven behouden."
+                                    : error.getMessage())
+                            .setPositiveButton("OK", null).show();
+                });
+            }
+        });
+    }
+
     private void pickVideo() {
         if (working) return;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -692,6 +752,41 @@ public final class MainActivity extends Activity {
             item.addView(copy, lp(-1, 44));
         }
 
+        // Interactive follow-up using the existing five results and the cached
+        // video analysis; no new upload, no new Tavily lookup.
+        LinearLayout editing = card();
+        LinearLayout.LayoutParams editingParams = lp(-1, -2);
+        editingParams.topMargin = dp(10);
+        results.addView(editing, editingParams);
+        addText(editing, "MAAK ER JOUW CAPTION VAN", 11, PURPLE, true, 0);
+        addText(editing, "Combineer ideeën, kies een favoriet of stuur de toon bij.", 13,
+                MUTED, false, 8);
+        revisionInput = new EditText(this);
+        revisionInput.setTextColor(WHITE);
+        revisionInput.setHintTextColor(MUTED);
+        revisionInput.setTextSize(14);
+        revisionInput.setGravity(Gravity.TOP | Gravity.START);
+        revisionInput.setInputType(InputType.TYPE_CLASS_TEXT |
+                InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        revisionInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(500)});
+        revisionInput.setMinLines(2);
+        revisionInput.setMaxLines(4);
+        revisionInput.setHint("Bijv. combineer 1 en 3, of neem 2 maar maak het subtieler.");
+        revisionInput.setBackground(shape(INNER, 12, STROKE));
+        revisionInput.setPadding(dp(13), dp(11), dp(13), dp(11));
+        LinearLayout.LayoutParams editLp = lp(-1, -2);
+        editLp.topMargin = dp(12);
+        editing.addView(revisionInput, editLp);
+        revisionButton = action("↻  Verfijn mijn captions", true, v -> refineResults());
+        revisionButton.setBackground(gradient(Color.rgb(198, 172, 253),
+                Color.rgb(154, 119, 233), 12));
+        LinearLayout.LayoutParams refineLp = lp(-1, 48);
+        refineLp.topMargin = dp(10);
+        editing.addView(revisionButton, refineLp);
+        revisionStatus = text("", 12, MUTED, false);
+        revisionStatus.setGravity(Gravity.CENTER);
+        editing.addView(revisionStatus, lp(-1, -2));
+
         // Keep research transparent, but let the captions be the primary screen.
         LinearLayout explanation = card();
         LinearLayout.LayoutParams ep = lp(-1, -2);
@@ -773,6 +868,7 @@ public final class MainActivity extends Activity {
         }
 
         showingResults = true;
+        hideKeyboard();
         updateUiStage();
         // The result title stays below the system status bar, even with scroll insets.
         scroll.post(() -> scroll.smoothScrollTo(0, 0));
