@@ -61,10 +61,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk Wolvero-Caption-Lab.apk
-          if gh release view v1.0 >/dev/null 2>&1; then
-            gh release upload v1.0 Wolvero-Caption-Lab.apk --clobber
+          if gh release view v1.1 >/dev/null 2>&1; then
+            gh release upload v1.1 Wolvero-Caption-Lab.apk --clobber
           else
-            gh release create v1.0 Wolvero-Caption-Lab.apk \
-              --title "Wolvero Caption Lab 1.0" \
+            gh release create v1.1 Wolvero-Caption-Lab.apk \
+              --title "Wolvero Caption Lab 1.1" \
               --notes "Wolvero Caption Lab for Android. Download the APK, install it, and enter your own free Gemini and Tavily keys in the app. Never share your keys."
           fi

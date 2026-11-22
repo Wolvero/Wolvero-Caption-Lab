@@ -1,6 +1,6 @@
 # Wolvero Caption Lab · Android
 
-**Wolvero Caption Lab 1.0** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Wolvero Caption Lab 1.1** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -19,6 +19,13 @@ Tik op **Instellingen** (tandwiel) of gebruik het eenmalige instelvenster bij de
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze via het tandwiel vervangen.
 
 De gebruiker heeft zelf reeds de sleutels gemaakt en hoeft die niet opnieuw aan te vragen.
+
+## Wat nieuw is in 1.1
+
+- Vul optioneel **de naam van je game** in voordat je analyseert. Als je die invult, gebruikt de AI die als de gametitel in plaats van zelf te gokken.
+- Onder **Het verhaal achter de clip** kun je optioneel in eigen woorden vertellen wat de grap of het emotionele moment is.
+- De AI analyseert video en geluid eerst feitelijk; daarna schrijft een afzonderlijke Engelse caption-editor vijf captions met WolveroGaming-voorbeelden als stijlreferentie. Een taalcontrole probeert eventuele Nederlandse output te herstellen.
+- Overbodige disclaimers en de losse 'Tip'-tekst zijn uit de app verwijderd. Het uploadgegeven in Instellingen blijft voor transparantie staan.
 
 ## Hoe de analyse werkt
 
