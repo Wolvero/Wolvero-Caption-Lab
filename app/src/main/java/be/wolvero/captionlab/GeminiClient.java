@@ -356,7 +356,9 @@ final class GeminiClient {
                 .put("observed_ending", result.observedEnding)
                 .put("mood_guess", result.mood)
                 .put("verified_chapter", "Volgens online bronnen".equals(result.chapterStatus)
-                        ? result.chapter : "").toString();
+                        ? result.chapter : "")
+                .put("game_research_background_not_clip_evidence", result.gameBackground)
+                .put("specific_game_scene_match_only_if_verified", result.relatedSceneLore).toString();
         String noteMeaning = creatorBrief == null ? "No creator note was supplied." :
                 creatorBrief.toString();
 
@@ -385,6 +387,11 @@ final class GeminiClient {
             "several options may express it differently, but don't repeat the same " +
             "sentence five times. Return the BEST and most shareable caption FIRST. " +
             "There is no obligation to fill five different stylistic archetypes. " +
+            "Game research can add understanding of the game's world and relevant " +
+            "character context. Use it only if relevant to what actually happens " +
+            "in this uploaded clip. Source summaries never prove the video events, " +
+            "and must not turn a proposal into a quest or invent a plot ending. " +
+            "If research is absent or inconclusive, rely on actual video and audio. " +
             "4. CHECK FACTS AND TONE: no invented events, actions, dialogue, spoilers " +
             "or conclusions. Keep who-does-what-to-whom, affirmations, negations, " +
             "acts withheld, and the outcome intact. If the creator explicitly states " +
@@ -509,6 +516,7 @@ final class GeminiClient {
                 .put("observed_story_arc", result.storyArc)
                 .put("observed_scene", result.scene)
                 .put("possible_theme_from_video", result.centralTheme)
+                .put("game_research_background_not_clip_evidence", result.gameBackground)
                 .put("chosen_editorial_focus", result.editorialFocus)
                 .put("chosen_editorial_tone", result.editorialTone);
         String prompt =
@@ -595,6 +603,8 @@ final class GeminiClient {
                 .put("observed_ending", result.observedEnding)
                 .put("story_arc", result.storyArc)
                 .put("central_theme", result.centralTheme)
+                .put("game_research_background", result.gameBackground)
+                .put("scene_lore_match", result.relatedSceneLore)
                 .put("editorial_focus", result.editorialFocus)
                 .put("editorial_tone", result.editorialTone)
                 .put("creator_note_original", creatorNote)
@@ -766,11 +776,18 @@ final class GeminiClient {
                 "If the title is marked 'provided' or 'filename', it comes from the creator " +
             "and must NOT be replaced by another franchise entry. " +
             "Without such a creator title the initial guess may be the wrong installment. " +
-                "Use Google Search for title plus distinctive observed characters, locations and events, " +
-                "and correct the game when the sources EXPLICITLY support the observed video. " +
+                "Search for the selected VIDEO GAME: official site, game review, game " +
+                "storyworld, guide or credible videogame wiki. Do NOT search for " +
+                "generic observed events like real proposals, weddings, fights or coffee. " +
+                "Correct the game ONLY if it was not supplied by the creator and strong " +
+                "game-specific sources show the exact alternative title. " +
                 "Do not treat broad reviews as confirmation of a specific scene or quest. " +
-                "Return valid JSON object with fields: game (corrected canonical title or empty), " +
-                "game_status ('confirmed'|'possible'|'unknown'), chapter (empty if unverified), " +
+                "Return JSON fields: game (canonical title or empty), " +
+                "game_status ('confirmed'|'possible'|'unknown'), " +
+                "game_context (1-3 English sentences about the actual game, grounded " +
+                "in game-specific web sources, or empty), " +
+                "scene_context (directly substantiated match to scene or empty), " +
+                "chapter (empty if unverified), " +
                 "status ('confirmed'|'possible'|'unknown' FOR THE CHAPTER), reason (short Dutch note). " +
                 "Confirm the game only with clear source-to-observation match; " +
                 "confirm the chapter only when explicitly linked to this precise scene. " +
@@ -887,8 +904,11 @@ final class GeminiClient {
                 JSONObject web = chunk == null ? null : chunk.optJSONObject("web");
                 if (web == null) continue;
                 String link = web.optString("uri", "");
-                if (link.startsWith("https://") && seen.add(link))
-                    result.sources.add(new Source(web.optString("title", "Online bron"), link));
+                String title = web.optString("title", "");
+                if (link.startsWith("https://") &&
+                        GameResearchFilter.relevant(result.game, title, link, "") &&
+                        seen.add(link))
+                    result.sources.add(new Source(title.isEmpty() ? "Gamebron" : title, link));
             }
         }
         applyVerdict(result, verification.text);
@@ -901,6 +921,11 @@ final class GeminiClient {
             String chapter = parsed.optString("chapter", "").trim();
             String verifiedGame = parsed.optString("game", "").trim();
             result.verificationNote = parsed.optString("reason", "");
+            if (!result.sources.isEmpty()) {
+                // Explicit research background is not evidence that a scene event occurred.
+                result.gameBackground = limit(parsed.optString("game_context", "").trim(), 650);
+                result.relatedSceneLore = limit(parsed.optString("scene_context", "").trim(), 350);
+            }
             if (!result.sources.isEmpty()
                     && !"provided".equalsIgnoreCase(result.confidence)
                     && !"filename".equalsIgnoreCase(result.confidence)
