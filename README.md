@@ -1,26 +1,35 @@
-# Wolvero Caption Lab · Android
+# Caption Lab · Android
 
-**Wolvero Caption Lab 1.4** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.5** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
-[**Download Wolvero Caption Lab voor Android**](https://github.com/Wolvero/Wolvero-Caption-Lab/releases/latest/download/Wolvero-Caption-Lab.apk)
+[**Download Caption Lab voor Android**](https://github.com/Wolvero/Wolvero-Caption-Lab/releases/latest/download/Caption-Lab.apk)
 
 De APK wordt automatisch via GitHub Actions gebouwd en gepubliceerd als GitHub Release op deze openbare repository. Op een Android-telefoon kun je het APK-bestand downloaden, eventueel toestemming geven voor installatie uit deze bron en de app openen. Geen GitHub-login nodig voor de publieke Release.
 
 ## Eerste gebruik: twee sleutels, één keer instellen
 
-Tik op **Instellingen** (tandwiel) of gebruik het eenmalige instelvenster bij de eerste start:
+Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleutels zo nodig wijzigen door het CL-logo lang ingedrukt te houden:
 
 1. Plak de eigen **Gemini API key** van [Google AI Studio](https://aistudio.google.com/api-keys).
 2. Plak de eigen **Tavily API key** van [Tavily](https://app.tavily.com).
 3. Tik **Bewaar & start**. Daarna kies je een video en tik je op **Create my captions**.
 
-De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze via het tandwiel vervangen.
+De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-De gebruiker heeft zelf reeds de sleutels gemaakt en hoeft die niet opnieuw aan te vragen.
+## Wat nieuw is in 1.5
 
-## Wat nieuw is in 1.4
+- Naam, app-label, launcher-icon, logo en zichtbare branding zijn **Caption Lab**. De bestaande technische Android package-id blijft behouden, zodat toekomstige updates dezelfde app-identiteit gebruiken.
+- Videoanalyse legt **de zichtbare afloop** expliciet vast, met eventuele onzekerheid in het videobeeld.
+- Een ingevulde, optionele auteurscontext wordt via een **aparte semantische interpretatie** verwerkt: wie doet wat, welke handeling gebeurt of net niet, en wat is de bedoelde afloop?
+- De captionschrijver ontvangt zowel de feitelijke videoanalyse als het apart gelabelde auteurscommentaar. De notitie is niet verplicht.
+- Een extra onafhankelijke AI-redactie controleert bij ingevulde context of de vijf captions de kernhandeling of afloop impliciet of expliciet tegenspreken. Deze algemene consistentiecontrole is **niet specifiek voor genade** of voor een game geschreven.
+- De extra API-calls voor notities verbruiken meer van het gratis Gemini-quotum. Zonder notitie blijft de normale videoworkflow behouden.
+
+De werking van de semantische kwaliteitscontrole moet nog aan de hand van echte clips worden geëvalueerd. Een geslaagde build bewijst alleen dat de app compileert.
+
+## Eerdere verbeteringen in 1.4
 
 - **Een interface die met je mee verandert:** op het startscherm zie je het uploadverhaal; zodra je een video selecteert verdwijnen de intro en informatiechips. Je ziet de gekozen clip, het optionele gameveld en de knop om captions te maken. Zodra er resultaten zijn, verdwijnen de uploadblokken en komen de captions meteen bovenaan.
 - **Geen permanent sleutel-tandwiel** wanneer beide sleutels zijn opgeslagen. Je kunt sleutels indien nodig nog wijzigen door het **W/-logo lang ingedrukt** te houden. Bij ontbrekende sleutels of bepaalde foutgevallen kan de configuratie uiteraard terug verschijnen.
@@ -52,7 +61,7 @@ Dit is een code- en buildverbetering. De resultaten van een echte GTA VI-video m
 
 - Vul optioneel **de naam van je game** in voordat je analyseert. Als je die invult, gebruikt de AI die als de gametitel in plaats van zelf te gokken.
 - Onder **Het verhaal achter de clip** kun je optioneel in eigen woorden vertellen wat de grap of het emotionele moment is.
-- De AI analyseert video en geluid eerst feitelijk; daarna schrijft een afzonderlijke Engelse caption-editor vijf captions met WolveroGaming-voorbeelden als stijlreferentie. Een taalcontrole probeert eventuele Nederlandse output te herstellen.
+- De AI analyseert video en geluid eerst feitelijk; daarna schrijft een afzonderlijke Engelse caption-editor vijf captions met gaming creator-voorbeelden als stijlreferentie. Een taalcontrole probeert eventuele Nederlandse output te herstellen.
 - Overbodige disclaimers en de losse 'Tip'-tekst zijn uit de app verwijderd. Het uploadgegeven in Instellingen blijft voor transparantie staan.
 
 ## Hoe de analyse werkt

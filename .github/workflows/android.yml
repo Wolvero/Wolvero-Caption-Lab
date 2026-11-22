@@ -51,7 +51,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Wolvero-Caption-Lab-APK
+          name: Caption-Lab-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
@@ -60,11 +60,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Wolvero-Caption-Lab.apk
-          if gh release view v1.4 >/dev/null 2>&1; then
-            gh release upload v1.4 Wolvero-Caption-Lab.apk --clobber
+          cp app/build/outputs/apk/debug/app-debug.apk Caption-Lab.apk
+          if gh release view v1.5 >/dev/null 2>&1; then
+            gh release upload v1.5 Caption-Lab.apk --clobber
           else
-            gh release create v1.4 Wolvero-Caption-Lab.apk \
-              --title "Wolvero Caption Lab 1.4" \
+            gh release create v1.5 Caption-Lab.apk \
+              --title "Caption Lab 1.5" \
               --notes "Wolvero Caption Lab for Android. Download the APK, install it, and enter your own free Gemini and Tavily keys in the app. Never share your keys."
           fi

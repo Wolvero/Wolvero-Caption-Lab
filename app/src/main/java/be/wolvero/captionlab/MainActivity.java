@@ -171,17 +171,17 @@ public final class MainActivity extends Activity {
         setContentView(scroll);
 
         LinearLayout header = horizontal();
-        TextView logo = text("W/", 27, Color.WHITE, true);
+        TextView logo = text("CL", 23, Color.WHITE, true);
         logo.setGravity(Gravity.CENTER);
         logo.setBackground(gradient(Color.rgb(146, 97, 250), Color.rgb(89, 72, 195), 15));
         header.addView(logo, lp(54, 54));
-        logo.setContentDescription("Wolvero. Lang indrukken om je API-sleutels te wijzigen.");
+        logo.setContentDescription("Caption Lab. Lang indrukken om je API-sleutels te wijzigen.");
         logo.setOnLongClickListener(v -> { showSetupDialog(); return true; });
         LinearLayout wordmark = vertical();
         LinearLayout.LayoutParams wm = new LinearLayout.LayoutParams(0, -2, 1);
         wm.leftMargin = dp(13);
-        wordmark.addView(text("WOLVERO", 18, WHITE, true));
-        TextView subtitle = text("C A P T I O N  L A B", 9, MUTED, true);
+        wordmark.addView(text("CAPTION", 18, WHITE, true));
+        TextView subtitle = text("L A B", 11, MUTED, true);
         LinearLayout.LayoutParams su = lp(-1, -2);
         su.topMargin = dp(4);
         wordmark.addView(subtitle, su);
@@ -371,7 +371,7 @@ public final class MainActivity extends Activity {
         fp.topMargin = dp(35);
         footer.setGravity(Gravity.CENTER);
         footer.addView(text("MADE FOR THE MOMENTS WORTH SHARING", 10, MUTED, true));
-        TextView foot = text("WOLVEROGAMING", 9, PURPLE, true);
+        TextView foot = text("CAPTION LAB", 9, PURPLE, true);
         LinearLayout.LayoutParams footp = lp(-2, -2);
         footp.topMargin = dp(7);
         footer.addView(foot, footp);
@@ -670,7 +670,7 @@ public final class MainActivity extends Activity {
             addSpacer(item, 13);
             Button copy = action("⧉  Copy caption", false, v -> {
                 ClipboardManager clip = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                clip.setPrimaryClip(ClipData.newPlainText("Wolvero caption", caption.text));
+                clip.setPrimaryClip(ClipData.newPlainText("Caption Lab caption", caption.text));
                 Toast.makeText(this, "Caption gekopieerd!", Toast.LENGTH_SHORT).show();
             });
             item.addView(copy, lp(-1, 44));
