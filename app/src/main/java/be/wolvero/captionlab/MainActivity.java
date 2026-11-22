@@ -650,7 +650,7 @@ public final class MainActivity extends Activity {
     private void showResult(GeminiClient.Result data) {
         results.removeAllViews();
         resultVideoLabel.setText(data.game + "  •  " + selectedName);
-        addText(results, "05 CAPTIONS OM UIT TE KIEZEN", 12, PURPLE, true, 15);
+        addText(results, String.format(Locale.getDefault(), "%02d CAPTIONS OM UIT TE KIEZEN", data.captions.size()), 12, PURPLE, true, 15);
         addSpacer(results, 13);
         int i = 0;
         for (GeminiClient.Caption caption : data.captions) {
