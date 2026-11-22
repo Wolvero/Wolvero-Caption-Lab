@@ -1,6 +1,6 @@
 # Caption Lab · Android
 
-**Caption Lab 1.9** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
+**Caption Lab 1.10** is een persoonlijke Android-app voor gameplayclips. Kies een video (max. 80 MiB), laat beeld en geluid analyseren, bekijk de herkende game en scène, controleer indien mogelijk het hoofdstuk via online bronnen en kies uit vijf Engelstalige captions. Geen advertenties, abonnementen of betaalmuur in de app.
 
 ## Direct de APK downloaden
 
@@ -18,7 +18,19 @@ Gebruik het eenmalige instelvenster bij de eerste start. Nadien kun je de sleute
 
 De sleutels worden via de Android KeyStore lokaal versleuteld bewaard. Ze staan **niet in de broncode, APK of op GitHub** en zijn nergens publiek zichtbaar. Bij latere sessies hoef je ze niet meer in te vullen. Je kunt ze zo nodig vervangen via het CL-logo.
 
-## Wat nieuw is in 1.9
+## Wat nieuw is in 1.10
+
+- **Gamegerichte research:** de Tavily-zoekvraag vertrekt van de exacte geselecteerde gametitel tussen aanhalingstekens en zoekt naar gamepagina's, reviews en achtergrond. Geen generieke webzoektocht op acties in de clip zoals huwelijksaanzoeken, mesgevechten of koffiescènes.
+- **Bronnenfilter:** zoekresultaten worden eerst gecontroleerd op game-naam en daadwerkelijke videogamecontext; generieke huwelijksaanzoekpagina's of verwarring met een andere game komen niet meer zomaar in de resultaten. De Google Search-fallback wordt ook op bronnen gefilterd.
+- **Inhoudelijk begrip:** Gemini vat ondersteunde game-achtergrond kort samen op basis van relevante bronnen. Die context komt vervolgens afzonderlijk bij de captionschrijver terecht, zonder te claimen dat game-lore gebeurtenissen in het filmpje bewijst.
+- **Voorzichtig met scènematches:** een specifieke missie, personage of scène wordt alleen gekoppeld aan online informatie wanneer er een onderscheidend bewijs is, anders blijft dat veld leeg.
+- **Transparante weergave:** de uitklapbare analyse toont apart game-achtergrond, bevestigde scènecontext (indien aanwezig), en daadwerkelijk relevante gamebronnen.
+- **Geen extra Tavily-aanvraag:** er blijft standaard één gerichte zoekopdracht per clip. De bestaande Gemini-beoordeling haalt er de relevante gamekennis uit.
+- **Geautomatiseerde regressietest:** onder meer het probleem met Forever Ago en irrelevante pagina's over echte huwelijksaanzoeken wordt getest, naast gameversies uit verschillende delen van een franchise.
+
+Deze release is op code en build te testen; de kwaliteit van de echte zoekresultaten en captions moet nog met een gebruikersclip worden geverifieerd.
+
+## Eerdere verbeteringen in 1.9
 
 - **Gametitel uit de bestandsnaam is niet langer optioneel voor de AI.** Bij de bevestigde gebruikersconventie `GameTitleWithoutSpaces_organisatie.mp4` is de prefix de gekozen game. De AI kan die niet vervangen door een vergelijkbare titel in dezelfde franchise. Het handmatig ingevulde gameveld krijgt nog steeds voorrang.
 - **Bewijsbronnen strikt gescheiden:** de gameprefix is uitsluitend voor de game-identiteit. De rest van de bestandsnaam wordt nooit als creatieve of inhoudelijke context doorgegeven. Beelden en geluid blijven bepalend voor de gebeurtenissen, dialogen en afloop.
