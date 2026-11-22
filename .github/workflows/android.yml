@@ -15,7 +15,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # GitHub's Ubuntu runner already includes the Android SDK and sdkmanager.
+      # The older setup action tries to install the retired 'tools' package.
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
