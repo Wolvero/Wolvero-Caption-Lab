@@ -195,7 +195,9 @@ final class GeminiClient {
             "Watch the actual VIDEO and listen to the AUDIO, including dialogue and any captions on screen. " +
             "The user may identify the game; when supplied, treat that as the correct GAME TITLE rather " +
             "than contradicting it based on visual guesswork. Still inspect what ACTUALLY happens. " +
-            "Creator context may explain a joke, roleplay or intended framing. " +
+            "Creator context is OPTIONAL. If it is empty, independently infer the action, emotional tone " +
+            "and potential punchline entirely from the video and sound. Never ask for an explanation. " +
+            "If a note is supplied, use it only as supplementary framing, not as a substitute for viewing the clip. " +
             "Do not invent unseen actions, characters, chapter names, quest details, story endings or dialogue. " +
             "If uncertain about chapter, leave chapter_guess empty. " +
             "Write the ENTIRE JSON in ENGLISH, even when user context is written in Dutch. " +
@@ -230,6 +232,9 @@ final class GeminiClient {
                 .toString();
         String prompt =
             "You write captions for WolveroGaming, a personal English-language TikTok gaming channel. " +
+            "Your primary and sufficient creative material is the factual VIDEO ANALYSIS and AUDIO. " +
+            "Creator notes are OPTIONAL and often empty. Never require, request or assume extra explanation. " +
+            "Find the interesting visual detail, action, surprise, funny contrast or feeling yourself. " +
             "THE FIVE CAPTIONS MUST BE IN NATURAL IDIOMATIC ENGLISH, NOT DUTCH OR FLEMISH, " +
             "regardless of what language the creator note uses. Never translate the creator note verbatim; " +
             "capture its intention in effortless spoken English. " +
