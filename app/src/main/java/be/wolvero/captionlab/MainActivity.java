@@ -700,6 +700,15 @@ public final class MainActivity extends Activity {
             detailsTitle.setText(open ? "Videoanalyse en bronnen bekijken  ＋" :
                     "Videoanalyse en bronnen verbergen  −");
         });
+        if (!data.editorialFocus.isEmpty() || !data.editorialTone.isEmpty()) {
+            addText(detailContent, "CREATIEVE KEUZE", 11, PURPLE, true, 18);
+            if (!data.editorialFocus.isEmpty())
+                addText(detailContent, data.editorialFocus, 14, WHITE, false, 7);
+            if (!data.editorialTone.isEmpty())
+                addText(detailContent, "Toon: " + data.editorialTone, 12, MUTED, false, 7);
+            if (!data.editorialHook.isEmpty())
+                addText(detailContent, "Hook: " + data.editorialHook, 12, MUTED, false, 7);
+        }
         addText(detailContent, "GAME", 11, PURPLE, true, 18);
         addText(detailContent, data.game, 18, WHITE, true, 7);
         if ("provided".equals(data.confidence)) {
