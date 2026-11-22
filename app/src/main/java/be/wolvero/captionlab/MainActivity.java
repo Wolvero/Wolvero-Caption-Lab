@@ -18,6 +18,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.text.InputType;
+import android.text.TextUtils;
+import android.view.inputmethod.InputMethodManager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +57,7 @@ public final class MainActivity extends Activity {
     private String selectedName = "";
     private boolean working;
 
-    private LinearLayout content, results, previewBox;
+    private LinearLayout content, results, previewBox, uploadTitle;
     private LinearLayout introSection, uploadSection, guidanceSection, resultHeader, footerSection;
     private View connectionRow;
     private Button keyButton, chooseButton;
@@ -65,7 +67,10 @@ public final class MainActivity extends Activity {
     private View setupNotice;
     private ProgressBar progressBar;
     private Button analyzeButton;
-    private EditText gameInput, creatorNoteInput;
+    private EditText creatorNoteInput, revisionInput;
+    private Button revisionButton;
+    private TextView revisionStatus;
+    private GeminiClient.Result lastResult;
     private LinearLayout contextExtra;
     private Button contextToggle;
     private ImageView previewImage;
@@ -127,7 +132,7 @@ public final class MainActivity extends Activity {
         b.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
         b.setTextColor(primary ? BG : WHITE);
         b.setBackground(shape(primary ? PURPLE : INNER, 13, primary ? 0 : STROKE));
-        b.setMinHeight(dp(52));
+        b.setMinHeight(dp(44));
         b.setPadding(dp(14), dp(8), dp(14), dp(8));
         b.setOnClickListener(listener);
         return b;
@@ -166,7 +171,7 @@ public final class MainActivity extends Activity {
             return insets;
         });
         content = vertical();
-        content.setPadding(dp(20), dp(25), dp(20), dp(42));
+        content.setPadding(dp(18), dp(17), dp(18), dp(25));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         setContentView(scroll);
 
@@ -191,16 +196,18 @@ public final class MainActivity extends Activity {
         keyButton.setTextSize(23);
         keyButton.setPadding(0, 0, 0, 0);
         header.addView(keyButton, lp(50, 50));
-        content.addView(header, lp(-1, -2));
+        LinearLayout.LayoutParams headerLp = lp(-1, -2);
+        headerLp.bottomMargin = dp(17);
+        content.addView(header, headerLp);
 
         introSection = vertical();
         content.addView(introSection, lp(-1, -2));
-        addSpacer(introSection, 30);
+        addSpacer(introSection, 14);
         TextView eyebrow = text("YOUR GAMEPLAY. YOUR STORY.", 11, GOOD, true);
         introSection.addView(eyebrow, lp(-1, -2));
-        addText(introSection, "Every great clip\nhas a story.", 33, WHITE, true, 11);
-        addText(introSection, "Upload je gameplay. Wij zoeken zelf de juiste toon én de juiste woorden.", 14, MUTED, false, 11);
-        addSpacer(introSection, 19);
+        addText(introSection, "Every great clip\nhas a story.", 29, WHITE, true, 8);
+        addText(introSection, "Upload je gameplay. Wij zoeken zelf de juiste toon én de juiste woorden.", 13, MUTED, false, 8);
+        addSpacer(introSection, 12);
 
         LinearLayout tags = horizontal();
         TextView a = chip("◉  VIDEO + AUDIO");
@@ -210,14 +217,14 @@ public final class MainActivity extends Activity {
         tags.addView(a, tag1);
         tags.addView(b, new LinearLayout.LayoutParams(0, -2, 1f));
         introSection.addView(tags, lp(-1, -2));
-        addSpacer(introSection, 21);
+        addSpacer(introSection, 13);
 
         uploadSection = vertical();
         LinearLayout hero = uploadSection;
         hero.setBackground(gradient(Color.rgb(38, 31, 72), Color.rgb(19, 26, 41), 23));
-        hero.setPadding(dp(19), dp(21), dp(19), dp(21));
+        hero.setPadding(dp(15), dp(15), dp(15), dp(15));
         content.addView(hero, lp(-1, -2));
-        LinearLayout uploadTitle = horizontal();
+        uploadTitle = horizontal();
         TextView upIcon = text("↥", 31, PURPLE, true);
         upIcon.setGravity(Gravity.CENTER);
         upIcon.setBackground(shape(Color.rgb(53, 44, 93), 16, Color.rgb(83, 65, 132)));
@@ -237,55 +244,44 @@ public final class MainActivity extends Activity {
         previewBox.setGravity(Gravity.CENTER);
         previewBox.setBackground(shape(Color.rgb(21, 24, 41), 16, Color.rgb(85, 69, 127)));
         LinearLayout.LayoutParams pp = lp(-1, -2);
-        pp.topMargin = dp(21);
+        pp.topMargin = dp(13);
         hero.addView(previewBox, pp);
-        pad(previewBox, 12, 17);
+        pad(previewBox, 10, 12);
         previewImage = new ImageView(this);
         previewImage.setAdjustViewBounds(true);
         previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
         previewImage.setVisibility(View.GONE);
-        previewBox.addView(previewImage, lp(-1, 170));
-        videoName = text("Your next great clip starts here", 14, WHITE, true);
+        previewBox.addView(previewImage, lp(-1, 118));
+        videoName = text("Your next great clip starts here", 13, WHITE, true);
+        videoName.setSingleLine(true);
+        videoName.setEllipsize(TextUtils.TruncateAt.MIDDLE);
         videoName.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams nameLp = lp(-1, -2);
-        nameLp.topMargin = dp(10);
+        nameLp.topMargin = dp(8);
         previewBox.addView(videoName, nameLp);
         sizeLabel = text("MP4, MOV of WebM  •  tot 80 MB", 12, MUTED, false);
         sizeLabel.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams sizeLp = lp(-1, -2);
-        sizeLp.topMargin = dp(7);
+        sizeLp.topMargin = dp(4);
         previewBox.addView(sizeLabel, sizeLp);
-        addSpacer(hero, 15);
+        addSpacer(hero, 10);
         chooseButton = action("＋  Selecteer video", false, v -> pickVideo());
-        hero.addView(chooseButton, lp(-1, 50));
+        chooseButton.setMinHeight(dp(43));
+        hero.addView(chooseButton, lp(-1, 43));
 
-        addSpacer(content, 15);
+        addSpacer(content, 11);
         guidanceSection = card();
         LinearLayout guidance = guidanceSection;
+        guidance.setPadding(dp(12), dp(12), dp(12), dp(12));
         content.addView(guidance, lp(-1, -2));
-        addText(guidance, "GAME (OPTIONEEL)", 11, PURPLE, true, 0);
-        addText(guidance, "De app herkent je game zelf. Weet je dat hij zich vergist? Dan kun je hier de titel invullen.", 12, MUTED, false, 9);
-        gameInput = new EditText(this);
-        gameInput.setSingleLine(true);
-        gameInput.setTextColor(WHITE);
-        gameInput.setHintTextColor(MUTED);
-        gameInput.setTextSize(15);
-        gameInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-        gameInput.setHint("Automatisch herkennen");
-        gameInput.setBackground(shape(INNER, 12, STROKE));
-        gameInput.setPadding(dp(14), dp(11), dp(14), dp(11));
-        LinearLayout.LayoutParams glp = lp(-1, 52);
-        glp.topMargin = dp(13);
-        guidance.addView(gameInput, glp);
-
-        addSpacer(guidance, 11);
         contextToggle = action("＋  Extra context toevoegen (optioneel)", false, v -> {
             boolean open = contextExtra.getVisibility() == View.VISIBLE;
             contextExtra.setVisibility(open ? View.GONE : View.VISIBLE);
             contextToggle.setText(open ? "＋  Extra context toevoegen (optioneel)" :
                     "−  Extra context verbergen");
         });
-        guidance.addView(contextToggle, lp(-1, 48));
+        contextToggle.setMinHeight(dp(43));
+        guidance.addView(contextToggle, lp(-1, 43));
         contextExtra = vertical();
         contextExtra.setVisibility(View.GONE);
         guidance.addView(contextExtra, lp(-1, -2));
@@ -303,13 +299,14 @@ public final class MainActivity extends Activity {
         clp.topMargin = dp(11);
         contextExtra.addView(creatorNoteInput, clp);
 
-        addSpacer(content, 15);
+        addSpacer(content, 11);
         analyzeButton = action("✨  CREATE MY CAPTIONS   →", true, v -> beginAnalysis());
         analyzeButton.setTextSize(15);
         analyzeButton.setBackground(gradient(Color.rgb(198, 172, 253), Color.rgb(154, 119, 233), 16));
-        content.addView(analyzeButton, lp(-1, 59));
+        analyzeButton.setMinHeight(dp(52));
+        content.addView(analyzeButton, lp(-1, 52));
         setButtonReady();
-        addSpacer(content, 15);
+        addSpacer(content, 10);
 
         LinearLayout statusRow = horizontal();
         connectionRow = statusRow;
@@ -393,6 +390,19 @@ public final class MainActivity extends Activity {
         results.setVisibility(showingResults ? View.VISIBLE : View.GONE);
         footerSection.setVisibility(hasVideo ? View.GONE : View.VISIBLE);
         chooseButton.setText(hasVideo ? "↻  Andere video kiezen" : "＋  Selecteer video");
+        uploadTitle.setVisibility(hasVideo ? View.GONE : View.VISIBLE);
+        int availableHeight = getResources().getConfiguration().screenHeightDp;
+        int previewHeight = availableHeight < 600 ? 84 : availableHeight < 740 ? 106 : 130;
+        ViewGroup.LayoutParams imageParams = previewImage.getLayoutParams();
+        if (imageParams != null && imageParams.height != dp(previewHeight)) {
+            imageParams.height = dp(previewHeight);
+            previewImage.setLayoutParams(imageParams);
+        }
+        LinearLayout.LayoutParams previewParams = (LinearLayout.LayoutParams) previewBox.getLayoutParams();
+        previewParams.topMargin = dp(hasVideo ? 0 : 13);
+        previewBox.setLayoutParams(previewParams);
+        uploadSection.setPadding(dp(15), dp(hasVideo ? 12 : 15),
+                dp(15), dp(hasVideo ? 12 : 15));
     }
     private void setButtonReady() {
         if (analyzeButton == null) return;
@@ -549,7 +559,8 @@ public final class MainActivity extends Activity {
                     selectedMime = mime;
                     showingResults = false;
                     // Do not allow hidden context from another clip to affect the next analysis.
-                    gameInput.setText("");
+                    lastResult = null;
+                    hideKeyboard();
                     creatorNoteInput.setText("");
                     contextExtra.setVisibility(View.GONE);
                     contextToggle.setText("＋  Extra context toevoegen (optioneel)");
@@ -619,7 +630,7 @@ public final class MainActivity extends Activity {
         try { optionalKey = SecureKeys.loadTavily(this); }
         catch (Exception ignored) { optionalKey = ""; }
         tavilyKey = optionalKey;
-        final String gameHint = gameInput == null ? "" : gameInput.getText().toString().trim();
+        final String gameHint = ""; // Game comes from the fixed filename prefix; manual field removed.
         // User convention: the first underscore separates the game from purely personal
         // file-organization text. Never give the suffix to any AI request.
         final String filenameGameHint = FilenameGameHint.extract(selectedName);
@@ -653,6 +664,7 @@ public final class MainActivity extends Activity {
     }
     private void showResult(GeminiClient.Result data) {
         results.removeAllViews();
+        lastResult = data;
         resultVideoLabel.setText(data.game + "  •  " + selectedName);
         addText(results, String.format(Locale.getDefault(), "%02d CAPTIONS OM UIT TE KIEZEN", data.captions.size()), 12, PURPLE, true, 15);
         addSpacer(results, 13);
