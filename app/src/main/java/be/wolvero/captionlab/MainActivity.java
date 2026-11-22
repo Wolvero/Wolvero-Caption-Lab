@@ -56,6 +56,11 @@ public final class MainActivity extends Activity {
     private boolean working;
 
     private LinearLayout content, results, previewBox;
+    private LinearLayout introSection, uploadSection, guidanceSection, resultHeader, footerSection;
+    private View connectionRow;
+    private Button keyButton, chooseButton;
+    private TextView resultVideoLabel;
+    private boolean showingResults = false;
     private TextView videoName, sizeLabel, progressLabel, keyState, tavilyState, connectionLabel;
     private View setupNotice;
     private ProgressBar progressBar;
@@ -155,7 +160,7 @@ public final class MainActivity extends Activity {
         scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(BG);
-        scroll.setClipToPadding(false);
+        scroll.setClipToPadding(true);
         scroll.setOnApplyWindowInsetsListener((view, insets) -> {
             view.setPadding(0, insets.getSystemWindowInsetTop(), 0, insets.getSystemWindowInsetBottom());
             return insets;
@@ -170,6 +175,8 @@ public final class MainActivity extends Activity {
         logo.setGravity(Gravity.CENTER);
         logo.setBackground(gradient(Color.rgb(146, 97, 250), Color.rgb(89, 72, 195), 15));
         header.addView(logo, lp(54, 54));
+        logo.setContentDescription("Wolvero. Lang indrukken om je API-sleutels te wijzigen.");
+        logo.setOnLongClickListener(v -> { showSetupDialog(); return true; });
         LinearLayout wordmark = vertical();
         LinearLayout.LayoutParams wm = new LinearLayout.LayoutParams(0, -2, 1);
         wm.leftMargin = dp(13);
@@ -179,19 +186,21 @@ public final class MainActivity extends Activity {
         su.topMargin = dp(4);
         wordmark.addView(subtitle, su);
         header.addView(wordmark, wm);
-        Button gear = action("⚙", false, v -> showSetupDialog());
-        gear.setContentDescription("Instellingen en API-sleutels");
-        gear.setTextSize(23);
-        gear.setPadding(0, 0, 0, 0);
-        header.addView(gear, lp(50, 50));
+        keyButton = action("⚙", false, v -> showSetupDialog());
+        keyButton.setContentDescription("API-sleutels instellen");
+        keyButton.setTextSize(23);
+        keyButton.setPadding(0, 0, 0, 0);
+        header.addView(keyButton, lp(50, 50));
         content.addView(header, lp(-1, -2));
 
-        addSpacer(content, 31);
+        introSection = vertical();
+        content.addView(introSection, lp(-1, -2));
+        addSpacer(introSection, 30);
         TextView eyebrow = text("YOUR GAMEPLAY. YOUR STORY.", 11, GOOD, true);
-        content.addView(eyebrow, lp(-1, -2));
-        addText(content, "Every great clip\nhas a story.", 33, WHITE, true, 11);
-        addText(content, "Upload je gameplay. Wij halen het moment eruit en schrijven vijf captions die écht bij je clip passen.", 14, MUTED, false, 11);
-        addSpacer(content, 19);
+        introSection.addView(eyebrow, lp(-1, -2));
+        addText(introSection, "Every great clip\nhas a story.", 33, WHITE, true, 11);
+        addText(introSection, "Upload je gameplay. Wij zoeken zelf de juiste toon én de juiste woorden.", 14, MUTED, false, 11);
+        addSpacer(introSection, 19);
 
         LinearLayout tags = horizontal();
         TextView a = chip("◉  VIDEO + AUDIO");
@@ -200,10 +209,11 @@ public final class MainActivity extends Activity {
         tag1.rightMargin = dp(9);
         tags.addView(a, tag1);
         tags.addView(b, new LinearLayout.LayoutParams(0, -2, 1f));
-        content.addView(tags, lp(-1, -2));
-        addSpacer(content, 21);
+        introSection.addView(tags, lp(-1, -2));
+        addSpacer(introSection, 21);
 
-        LinearLayout hero = vertical();
+        uploadSection = vertical();
+        LinearLayout hero = uploadSection;
         hero.setBackground(gradient(Color.rgb(38, 31, 72), Color.rgb(19, 26, 41), 23));
         hero.setPadding(dp(19), dp(21), dp(19), dp(21));
         content.addView(hero, lp(-1, -2));
@@ -246,11 +256,12 @@ public final class MainActivity extends Activity {
         sizeLp.topMargin = dp(7);
         previewBox.addView(sizeLabel, sizeLp);
         addSpacer(hero, 15);
-        Button choose = action("＋  Selecteer video", false, v -> pickVideo());
-        hero.addView(choose, lp(-1, 50));
+        chooseButton = action("＋  Selecteer video", false, v -> pickVideo());
+        hero.addView(chooseButton, lp(-1, 50));
 
         addSpacer(content, 15);
-        LinearLayout guidance = card();
+        guidanceSection = card();
+        LinearLayout guidance = guidanceSection;
         content.addView(guidance, lp(-1, -2));
         addText(guidance, "GAME (OPTIONEEL)", 11, PURPLE, true, 0);
         addText(guidance, "De app herkent je game zelf. Weet je dat hij zich vergist? Dan kun je hier de titel invullen.", 12, MUTED, false, 9);
@@ -301,6 +312,7 @@ public final class MainActivity extends Activity {
         addSpacer(content, 15);
 
         LinearLayout statusRow = horizontal();
+        connectionRow = statusRow;
         TextView dot = text("●", 12, GOOD, true);
         statusRow.addView(dot, lp(17, -2));
         connectionLabel = text("AI-verbinding instellen", 12, MUTED, false);
@@ -331,6 +343,18 @@ public final class MainActivity extends Activity {
         statp.topMargin = dp(11);
         content.addView(progressLabel, statp);
 
+        resultHeader = vertical();
+        LinearLayout.LayoutParams rhp = lp(-1, -2);
+        rhp.topMargin = dp(28);
+        content.addView(resultHeader, rhp);
+        addText(resultHeader, "YOUR RESULTS", 12, PURPLE, true, 0);
+        resultVideoLabel = text("", 14, MUTED, false);
+        LinearLayout.LayoutParams rv = lp(-1, -2);
+        rv.topMargin = dp(6);
+        resultHeader.addView(resultVideoLabel, rv);
+        addSpacer(resultHeader, 15);
+        resultHeader.addView(action("＋  Nieuwe video kiezen", false, v -> pickVideo()), lp(-1, 48));
+
         results = vertical();
         LinearLayout.LayoutParams rp = lp(-1, -2);
         rp.topMargin = dp(8);
@@ -341,7 +365,8 @@ public final class MainActivity extends Activity {
         refreshKeyState();
         refreshTavilyState();
 
-        LinearLayout footer = vertical();
+        footerSection = vertical();
+        LinearLayout footer = footerSection;
         LinearLayout.LayoutParams fp = lp(-1, -2);
         fp.topMargin = dp(35);
         footer.setGravity(Gravity.CENTER);
@@ -351,11 +376,24 @@ public final class MainActivity extends Activity {
         footp.topMargin = dp(7);
         footer.addView(foot, footp);
         content.addView(footer, fp);
+        updateUiStage();
         if (setupNotice.getVisibility() == View.VISIBLE) {
             scroll.post(this::showSetupDialog);
         }
     }
 
+    private void updateUiStage() {
+        boolean hasVideo = selectedVideo != null && selectedVideo.exists();
+        if (introSection == null || resultHeader == null) return;
+        introSection.setVisibility(hasVideo ? View.GONE : View.VISIBLE);
+        uploadSection.setVisibility(showingResults ? View.GONE : View.VISIBLE);
+        guidanceSection.setVisibility(hasVideo && !showingResults ? View.VISIBLE : View.GONE);
+        analyzeButton.setVisibility(hasVideo && !showingResults ? View.VISIBLE : View.GONE);
+        resultHeader.setVisibility(showingResults ? View.VISIBLE : View.GONE);
+        results.setVisibility(showingResults ? View.VISIBLE : View.GONE);
+        footerSection.setVisibility(hasVideo ? View.GONE : View.VISIBLE);
+        chooseButton.setText(hasVideo ? "↻  Andere video kiezen" : "＋  Selecteer video");
+    }
     private void setButtonReady() {
         if (analyzeButton == null) return;
         boolean ready = !working && selectedVideo != null && selectedVideo.exists();
@@ -373,8 +411,11 @@ public final class MainActivity extends Activity {
         boolean gemini = false, tavily = false;
         try { gemini = !SecureKeys.load(this).isEmpty(); } catch (Exception ignored) { }
         try { tavily = !SecureKeys.loadTavily(this).isEmpty(); } catch (Exception ignored) { }
+        // Once configured, don't keep a permanent settings icon or setup block on screen.
+        keyButton.setVisibility(gemini && tavily ? View.GONE : View.VISIBLE);
+        connectionRow.setVisibility(gemini && tavily ? View.GONE : View.VISIBLE);
         if (gemini && tavily) {
-            connectionLabel.setText("AI ready  •  automatische game- en scènecontrole");
+            connectionLabel.setText("AI ready");
             connectionLabel.setTextColor(GOOD);
             setupNotice.setVisibility(View.GONE);
         } else if (gemini) {
@@ -506,6 +547,7 @@ public final class MainActivity extends Activity {
                     selectedVideo = ready;
                     selectedName = name;
                     selectedMime = mime;
+                    showingResults = false;
                     // Do not allow hidden context from another clip to affect the next analysis.
                     gameInput.setText("");
                     creatorNoteInput.setText("");
@@ -518,6 +560,8 @@ public final class MainActivity extends Activity {
                     setButtonReady();
                     setProgress("", false);
                     results.removeAllViews();
+                    updateUiStage();
+                    scroll.post(() -> scroll.smoothScrollTo(0, 0));
                 });
             } catch (Exception e) {
                 if (tmp != null) tmp.delete();
